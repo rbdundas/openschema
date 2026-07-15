@@ -7,3 +7,4 @@ dist
 
 # Local file-based user database (contains password hashes — do not commit)
 data
+gcp-key.json

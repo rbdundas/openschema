@@ -6,3 +6,4 @@ dist
 .claude
 data
 *.log
+gcp-key.json
