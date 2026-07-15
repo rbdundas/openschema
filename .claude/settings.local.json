@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx webpack *)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:8080/)",
+      "Bash(curl -s http://localhost:8080/)",
+      "Bash(echo \"started pid $!\")",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl -s -o /dev/null -w \"still up: HTTP %{http_code}\\\\n\" http://localhost:3000/)",
+      "Bash(curl *)",
+      "Bash(npm install *)",
+      "Bash(node server/index.js)",
+      "Bash(node_modules/.bin/webpack serve *)",
+      "Bash(node --check server/index.js)",
+      "Bash(pkill -9 -f \"node server/index.js\")",
+      "Bash(timeout 2 bash -c '\\(exec 3<>/dev/tcp/127.0.0.1/3001\\) 2>/dev/null')"
+    ]
+  }
+}

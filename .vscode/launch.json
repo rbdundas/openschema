@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch API Server (Port 3001)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/server/index.js",
+      "restart": true,
+      "env": {
+        "PORT": "3001"
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Launch Web Server (Port 3000)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start"],
+      "console": "integratedTerminal"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Launch Web & API Servers",
+      "configurations": ["Launch API Server (Port 3001)", "Launch Web Server (Port 3000)"]
+    }
+  ]
+}

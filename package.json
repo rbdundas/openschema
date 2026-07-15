@@ -1,0 +1,39 @@
+{
+  "name": "ams",
+  "version": "0.0.1",
+  "description": "AMS static web site built on HTML5 Boilerplate.",
+  "private": true,
+  "keywords": [
+    "ams",
+    "html5-boilerplate",
+    "static-site",
+    "webpack"
+  ],
+  "license": "MIT",
+  "author": "Robert Dundas <rbdundas@gmail.com>",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "webpack serve --open --config webpack.config.dev.js",
+    "server": "node server/index.js",
+    "build": "webpack --config webpack.config.prod.js"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.11.2",
+    "bcryptjs": "^3.0.3",
+    "express": "^5.2.1",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@babel/preset-env": "^8.0.2",
+    "@babel/preset-react": "^8.0.1",
+    "babel-loader": "^10.1.1",
+    "copy-webpack-plugin": "^11.0.0",
+    "html-webpack-plugin": "^5.6.0",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4",
+    "webpack-merge": "^5.10.0"
+  }
+}

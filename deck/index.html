@@ -1,0 +1,455 @@
+<!doctype html>
+<html class="no-js" lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Catalyst AMS — Design Whitepaper</title>
+  <meta name="description" content="Design whitepaper for Catalyst, a modern insurance agency management system.">
+  <meta name="robots" content="noindex, nofollow">
+
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+
+  <link rel="stylesheet" href="/deck/deck.css">
+</head>
+
+<body>
+  <a class="skip-link" href="#page-title">Skip to content</a>
+
+  <div class="app">
+    <!-- ================= LEFT NAV / TABLE OF CONTENTS ================= -->
+    <aside class="rail" id="rail">
+      <div class="rail-brand">
+        <span class="rail-logo" aria-hidden="true">◆</span>
+        <span class="rail-brand-text">
+          <span class="rail-brand-name">Catalyst</span>
+          <span class="rail-brand-kind">AMS · Design Whitepaper</span>
+        </span>
+      </div>
+
+      <nav class="toc" aria-label="Table of contents">
+        <p class="toc-heading">Contents</p>
+        <ol class="toc-list" id="toc-list">
+          <li><a href="#title" data-page><span class="toc-num">01</span><span class="toc-label">Cover</span></a></li>
+          <li><a href="#executive-summary" data-page><span class="toc-num">02</span><span class="toc-label">Executive Summary</span></a></li>
+          <li><a href="#problem" data-page><span class="toc-num">03</span><span class="toc-label">The Problem</span></a></li>
+          <li><a href="#market" data-page><span class="toc-num">04</span><span class="toc-label">Market Opportunity</span></a></li>
+          <li><a href="#vision" data-page><span class="toc-num">05</span><span class="toc-label">Product Vision</span></a></li>
+          <li><a href="#modules" data-page><span class="toc-num">06</span><span class="toc-label">Core Modules</span></a></li>
+          <li><a href="#architecture" data-page><span class="toc-num">07</span><span class="toc-label">Architecture &amp; Technology</span></a></li>
+          <li><a href="#integrations" data-page><span class="toc-num">08</span><span class="toc-label">Integrations &amp; Ecosystem</span></a></li>
+          <li><a href="#security" data-page><span class="toc-num">09</span><span class="toc-label">Security &amp; Compliance</span></a></li>
+          <li><a href="#roadmap" data-page><span class="toc-num">10</span><span class="toc-label">Implementation Roadmap</span></a></li>
+          <li><a href="#business" data-page><span class="toc-num">11</span><span class="toc-label">Business Model &amp; GTM</span></a></li>
+          <li><a href="#team" data-page><span class="toc-num">12</span><span class="toc-label">Team &amp; Governance</span></a></li>
+          <li><a href="#risks" data-page><span class="toc-num">13</span><span class="toc-label">Risks &amp; Mitigation</span></a></li>
+          <li><a href="#ask" data-page><span class="toc-num">14</span><span class="toc-label">The Ask</span></a></li>
+        </ol>
+      </nav>
+
+      <div class="rail-foot">
+        <span class="rail-user" id="rail-user">·</span>
+        <button type="button" class="rail-logout" id="logout-btn">Log out</button>
+      </div>
+    </aside>
+
+    <!-- ================= STAGE ================= -->
+    <div class="stage">
+      <header class="topbar">
+        <button type="button" class="rail-toggle" id="rail-toggle" aria-label="Toggle contents" aria-expanded="false">☰</button>
+        <span class="topbar-loc" id="topbar-loc">Cover</span>
+        <div class="topbar-nav">
+          <span class="progress" id="progress">01 / 14</span>
+          <button type="button" class="pager" id="prev-btn" aria-label="Previous section">‹</button>
+          <button type="button" class="pager" id="next-btn" aria-label="Next section">›</button>
+        </div>
+      </header>
+
+      <main class="pages" id="pages">
+
+        <!-- 01 · COVER / TITLE PAGE -->
+        <section class="page page-cover" id="page-title" data-title="Cover" aria-labelledby="cover-h">
+          <div class="cover-grid" aria-hidden="true"></div>
+          <div class="cover-body">
+            <p class="cover-eyebrow">Confidential Design Whitepaper · v0.9 Draft</p>
+            <h1 class="cover-title" id="cover-h">Catalyst</h1>
+            <p class="cover-tag">The operating system for the modern insurance agency.</p>
+            <p class="cover-desc">
+              A ground-up agency management system that treats the policy lifecycle as
+              a connected system of record — not a filing cabinet with a search box.
+            </p>
+            <dl class="cover-meta">
+              <div><dt>Prepared by</dt><dd>Covalent Technologies Product Strategy</dd></div>
+              <div><dt>Date</dt><dd>July 2026</dd></div>
+              <div><dt>Audience</dt><dd>Executive review &amp; design partners</dd></div>
+              <div><dt>Classification</dt><dd>Confidential</dd></div>
+            </dl>
+          </div>
+        </section>
+
+        <!-- 02 · EXECUTIVE SUMMARY -->
+        <section class="page" id="page-executive-summary" data-title="Executive Summary" aria-labelledby="es-h">
+          <p class="eyebrow">02 — Executive Summary</p>
+          <h2 class="page-title" id="es-h">A system of record agencies actually want to open.</h2>
+          <p class="lede">
+            Independent agencies run on management systems built in a different era — heavy,
+            slow to change, and hostile to the integrations that now define the business.
+            Catalyst is a cloud-native AMS designed around the daily reality of a producer,
+            a CSR, and an operations lead, with automation and carrier connectivity as
+            first-class citizens rather than bolt-ons.
+          </p>
+          <div class="stat-row">
+            <div class="stat">
+              <span class="stat-figure">18 mo</span>
+              <span class="stat-label">Target from MVP to general availability</span>
+            </div>
+            <div class="stat">
+              <span class="stat-figure">3</span>
+              <span class="stat-label">Beachhead segments at launch</span>
+            </div>
+            <div class="stat">
+              <span class="stat-figure">API-first</span>
+              <span class="stat-label">Every capability exposed as a service</span>
+            </div>
+          </div>
+          <div class="cols">
+            <p>
+              This document lays out the problem we're solving, the market we're entering,
+              the product architecture, and a phased plan to get to revenue. It is a design
+              artifact, not a spec — the goal is alignment on direction before we commit
+              engineering to the build.
+            </p>
+            <p>
+              The thesis in one line: <strong>connect the policy lifecycle end to end</strong>,
+              make the everyday tasks disappear, and let agencies grow without adding headcount.
+            </p>
+          </div>
+        </section>
+
+        <!-- 03 · THE PROBLEM -->
+        <section class="page" id="page-problem" data-title="The Problem" aria-labelledby="pr-h">
+          <p class="eyebrow">03 — The Problem</p>
+          <h2 class="page-title" id="pr-h">Incumbents digitized the filing cabinet. Nothing more.</h2>
+          <p class="lede">
+            Today's leading systems were architected before the modern web. They store data
+            well but move it poorly, and the cost of that friction lands on the people least
+            able to absorb it — the staff of a 5-to-50 person agency.
+          </p>
+          <ul class="issue-list">
+            <li>
+              <span class="issue-tag">Fragmentation</span>
+              <p>Client data, policies, documents, and accounting live in separate silos that don't reconcile without manual re-entry.</p>
+            </li>
+            <li>
+              <span class="issue-tag">Stale connectivity</span>
+              <p>Carrier downloads arrive as overnight batch files; real-time quoting and servicing sit outside the system entirely.</p>
+            </li>
+            <li>
+              <span class="issue-tag">No automation</span>
+              <p>Renewals, follow-ups, and compliance checks are tracked in spreadsheets and memory, not in the workflow.</p>
+            </li>
+            <li>
+              <span class="issue-tag">Punishing UX</span>
+              <p>Dense, modal-heavy screens require weeks of training and still slow experienced staff down.</p>
+            </li>
+            <li>
+              <span class="issue-tag">Closed platform</span>
+              <p>Thin or paywalled APIs make it hard to add the modern tools agencies now depend on.</p>
+            </li>
+            <li>
+              <span class="issue-tag">Costly switching</span>
+              <p>Migration risk keeps agencies locked into tools they've already outgrown.</p>
+            </li>
+          </ul>
+        </section>
+
+        <!-- 04 · MARKET OPPORTUNITY -->
+        <section class="page" id="page-market" data-title="Market Opportunity" aria-labelledby="mk-h">
+          <p class="eyebrow">04 — Market Opportunity</p>
+          <h2 class="page-title" id="mk-h">A large, entrenched market ready to move.</h2>
+          <p class="lede">
+            The U.S. independent agency channel is fragmented, durable, and underserved by
+            software that keeps pace with how agencies now sell and service. Incumbency is
+            an advantage that has stopped compounding.
+          </p>
+          <div class="stat-row">
+            <div class="stat accent">
+              <span class="stat-figure">40k+</span>
+              <span class="stat-label">Independent P&amp;C agencies in the U.S.</span>
+            </div>
+            <div class="stat accent">
+              <span class="stat-figure">$5–7B</span>
+              <span class="stat-label">Estimated annual agency-tech spend</span>
+            </div>
+            <div class="stat accent">
+              <span class="stat-figure">2–3</span>
+              <span class="stat-label">Incumbents holding the majority of share</span>
+            </div>
+          </div>
+          <div class="cols">
+            <div>
+              <h3 class="sub">Where we start</h3>
+              <p>Small-to-midsize independent P&amp;C agencies (5–50 staff) that feel incumbent pain most acutely and can adopt without a services army.</p>
+            </div>
+            <div>
+              <h3 class="sub">Where we expand</h3>
+              <p>Adjacent motions — benefits agencies, MGAs and wholesalers, and multi-location networks — reachable once the core system of record is proven.</p>
+            </div>
+          </div>
+          <p class="footnote">Figures are directional planning estimates for this review, not audited market data.</p>
+        </section>
+
+        <!-- 05 · PRODUCT VISION -->
+        <section class="page" id="page-vision" data-title="Product Vision" aria-labelledby="vs-h">
+          <p class="eyebrow">05 — Product Vision &amp; Principles</p>
+          <h2 class="page-title" id="vs-h">Design principles we will not trade away.</h2>
+          <p class="lede">
+            These are the commitments that keep the product coherent as it grows. Every
+            feature decision is measured against them.
+          </p>
+          <ol class="principles">
+            <li>
+              <span class="principle-num">P1</span>
+              <div>
+                <h3>One connected record</h3>
+                <p>Client, policy, document, and ledger are one graph. Enter data once; it's correct everywhere.</p>
+              </div>
+            </li>
+            <li>
+              <span class="principle-num">P2</span>
+              <div>
+                <h3>Automate the routine</h3>
+                <p>The system does the follow-ups, the checks, and the busywork by default — staff handle exceptions.</p>
+              </div>
+            </li>
+            <li>
+              <span class="principle-num">P3</span>
+              <div>
+                <h3>Open by default</h3>
+                <p>Every capability is an API. Integrations are a platform feature, not a professional-services project.</p>
+              </div>
+            </li>
+            <li>
+              <span class="principle-num">P4</span>
+              <div>
+                <h3>Fast enough to trust</h3>
+                <p>Screens respond instantly. A tool experienced staff can fly through beats one that merely looks modern.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- 06 · CORE MODULES -->
+        <section class="page" id="page-modules" data-title="Core Modules" aria-labelledby="md-h">
+          <p class="eyebrow">06 — Core Modules &amp; Capabilities</p>
+          <h2 class="page-title" id="md-h">Modular Core Framework &amp; Extension Streams</h2>
+          <p class="lede">
+            Built as a modular monolith: a solid foundational framework (Workflow Engine, Base CRM, Insurance Knowledge) supporting pluggable, domain-specific modules.
+          </p>
+          <div class="module-grid">
+            <article class="module"><span class="module-k">Core</span><h3>Base CRM</h3><p>Accounts, contacts, activity logs, and timeline mapping built on actual events.</p></article>
+            <article class="module"><span class="module-k">Core</span><h3>Workflow Engine</h3><p>Intelligent, tuneable rules engine for standard and custom agency task pipelines.</p></article>
+            <article class="module"><span class="module-k">Core</span><h3>AI Ingestion</h3><p>Inherent OCR and LLM data extraction from emails and policies to automate population.</p></article>
+            <article class="module"><span class="module-k">Core</span><h3>Knowledge Base</h3><p>Carrier rules, forms, and compliance data vector-indexed for semantic search.</p></article>
+            <article class="module"><span class="module-k">Stream</span><h3>Proposals</h3><p>Interactive quote compilation, dynamic templates, and e-signatures.</p></article>
+            <article class="module"><span class="module-k">Stream</span><h3>Marketing</h3><p>Automated campaigns, client segmentation, and pipeline nurturing.</p></article>
+            <article class="module"><span class="module-k">Stream</span><h3>Analytics</h3><p>Book-of-business statistics, agent production, and live retention dashboards.</p></article>
+            <article class="module"><span class="module-k">Stream</span><h3>Claims</h3><p>Carrier-connected intake, status tracking, and automated client alerts.</p></article>
+          </div>
+        </section>
+
+        <!-- 07 · ARCHITECTURE -->
+        <section class="page" id="page-architecture" data-title="Architecture" aria-labelledby="ar-h">
+          <p class="eyebrow">07 — Architecture &amp; Technology</p>
+          <h2 class="page-title" id="ar-h">Modular Monolith built on Django, React &amp; GCP.</h2>
+          <p class="lede">
+            Built to scale to thousands of concurrent users. Strict module boundaries, serverless autoscaling, and automated intake pipelines form our technological moat.
+          </p>
+          <div class="layer-stack">
+            <div class="layer"><span class="layer-k">L1</span><div><h3>React Frontend Shell</h3><p>Modular workspaces resolving components cleanly; Webpack module federation support for independent feature streams.</p></div></div>
+            <div class="layer"><span class="layer-k">L2</span><div><h3>Django Core &amp; Apps</h3><p>Decoupled Python services running via local event triggers to prevent database coupling and preserve modular boundaries.</p></div></div>
+            <div class="layer"><span class="layer-k">L3</span><div><h3>AI Intake Pipeline</h3><p>Unstructured emails and PDF documents parsed via Cloud Run and Document AI, populating database fields automatically.</p></div></div>
+            <div class="layer"><span class="layer-k">L4</span><div><h3>GCP Managed Infrastructure</h3><p>Cloud Run serverless compute, Cloud SQL (PostgreSQL + pgvector for knowledge search), and Memorystore Redis.</p></div></div>
+          </div>
+          <div class="tag-row">
+            <span class="tag">Django &amp; React</span>
+            <span class="tag">pgvector Search</span>
+            <span class="tag">GCP Cloud Run</span>
+            <span class="tag">Event Pub/Sub</span>
+            <span class="tag">Cloud Tasks Queue</span>
+          </div>
+        </section>
+
+        <!-- 08 · INTEGRATIONS -->
+        <section class="page" id="page-integrations" data-title="Integrations" aria-labelledby="in-h">
+          <p class="eyebrow">08 — Integrations &amp; Ecosystem</p>
+          <h2 class="page-title" id="in-h">The agency's other tools, connected on day one.</h2>
+          <p class="lede">
+            An AMS lives at the center of an agency's stack. Catalyst ships with the
+            connections that matter and an open API for everything else.
+          </p>
+          <div class="module-grid">
+            <article class="module"><h3>Carrier download</h3><p>IVANS and direct carrier feeds for policies, endorsements, and claims.</p></article>
+            <article class="module"><h3>Comparative raters</h3><p>Push prefilled data to and pull quotes back from the rating tools agencies already use.</p></article>
+            <article class="module"><h3>Payments</h3><p>Client payments, financing, and trust-accounting-aware reconciliation.</p></article>
+            <article class="module"><h3>E-signature</h3><p>Send, track, and file signed ACORD and application forms without leaving the record.</p></article>
+            <article class="module"><h3>Accounting</h3><p>Two-way sync with general-ledger systems such as QuickBooks.</p></article>
+            <article class="module"><h3>Open API &amp; webhooks</h3><p>A documented public API and event webhooks for anything not covered natively.</p></article>
+          </div>
+        </section>
+
+        <!-- 09 · SECURITY -->
+        <section class="page" id="page-security" data-title="Security" aria-labelledby="se-h">
+          <p class="eyebrow">09 — Security &amp; Compliance</p>
+          <h2 class="page-title" id="se-h">Trust is the product. We build for it.</h2>
+          <p class="lede">
+            Agencies hold some of their clients' most sensitive data. Security and
+            compliance are foundational requirements, addressed in the architecture rather
+            than added before an audit.
+          </p>
+          <div class="rows">
+            <div class="drow"><dt>Encryption</dt><dd>TLS in transit and AES-256 at rest, with per-tenant key isolation.</dd></div>
+            <div class="drow"><dt>Access control</dt><dd>Role-based permissions, SSO/SAML, and enforced multi-factor authentication.</dd></div>
+            <div class="drow"><dt>Auditability</dt><dd>Immutable audit trail on every record change, exportable for review.</dd></div>
+            <div class="drow"><dt>Certification</dt><dd>SOC 2 Type II as a launch milestone; GLBA safeguards by design.</dd></div>
+            <div class="drow"><dt>Data governance</dt><dd>Configurable retention, deletion, and residency to meet state DOI requirements.</dd></div>
+            <div class="drow"><dt>Resilience</dt><dd>Automated backups, point-in-time recovery, and a documented DR plan.</dd></div>
+          </div>
+        </section>
+
+        <!-- 10 · ROADMAP -->
+        <section class="page" id="page-roadmap" data-title="Roadmap" aria-labelledby="rm-h">
+          <p class="eyebrow">10 — Implementation Roadmap</p>
+          <h2 class="page-title" id="rm-h">Ship a sharp core, then widen.</h2>
+          <p class="lede">
+            A phased plan that gets a usable system of record into design partners' hands
+            early and expands based on what we learn from real books of business.
+          </p>
+          <ol class="timeline">
+            <li>
+              <span class="tl-phase">Phase 1</span>
+              <div class="tl-body">
+                <h3>Foundation <span class="tl-when">Q3–Q4 2026</span></h3>
+                <p>Client &amp; policy core, documents, roles, and the API/event backbone. Private design partners.</p>
+              </div>
+            </li>
+            <li>
+              <span class="tl-phase">Phase 2</span>
+              <div class="tl-body">
+                <h3>Connected agency <span class="tl-when">Q1–Q2 2027</span></h3>
+                <p>Carrier downloads, commissions &amp; accounting, workflow automation, and first integrations.</p>
+              </div>
+            </li>
+            <li>
+              <span class="tl-phase">Phase 3</span>
+              <div class="tl-body">
+                <h3>General availability <span class="tl-when">H2 2027</span></h3>
+                <p>SOC 2, analytics, self-serve onboarding, and migration tooling. Open for paid sale.</p>
+              </div>
+            </li>
+            <li>
+              <span class="tl-phase">Phase 4</span>
+              <div class="tl-body">
+                <h3>Expand <span class="tl-when">2028</span></h3>
+                <p>AI assistance, benefits and MGA motions, and marketplace partnerships.</p>
+              </div>
+            </li>
+          </ol>
+        </section>
+
+        <!-- 11 · BUSINESS MODEL -->
+        <section class="page" id="page-business" data-title="Business Model" aria-labelledby="bm-h">
+          <p class="eyebrow">11 — Business Model &amp; Go-to-Market</p>
+          <h2 class="page-title" id="bm-h">Predictable SaaS, priced to the seat.</h2>
+          <p class="lede">
+            Recurring per-seat subscriptions with usage-based add-ons for high-value
+            connectivity. A land-and-expand motion that grows with the agency.
+          </p>
+          <div class="stat-row">
+            <div class="stat"><span class="stat-figure">Per seat</span><span class="stat-label">Tiered monthly subscription by role</span></div>
+            <div class="stat"><span class="stat-figure">Add-ons</span><span class="stat-label">Metered carrier &amp; payment connectivity</span></div>
+            <div class="stat"><span class="stat-figure">Onboarding</span><span class="stat-label">Guided migration as a paid service</span></div>
+          </div>
+          <div class="cols">
+            <div>
+              <h3 class="sub">Ideal customer</h3>
+              <p>Growth-minded independent P&amp;C agencies frustrated by incumbent friction and ready to switch within a quarter.</p>
+            </div>
+            <div>
+              <h3 class="sub">Motion</h3>
+              <p>Design-partner led at first, then inbound plus a small direct team, with referral and carrier-relationship channels over time.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 12 · TEAM -->
+        <section class="page" id="page-team" data-title="Team &amp; Governance" aria-labelledby="tm-h">
+          <p class="eyebrow">12 — Team &amp; Governance</p>
+          <h2 class="page-title" id="tm-h">A small team with clear ownership.</h2>
+          <p class="lede">
+            Catalyst is stewarded by Covalent Technologies' product organization with named owners for
+            each domain and a lightweight decision process to keep momentum.
+          </p>
+          <div class="module-grid">
+            <article class="module"><span class="module-k">Lead</span><h3>Product &amp; Design</h3><p>Owns vision, principles, and the design partner relationships.</p></article>
+            <article class="module"><span class="module-k">Lead</span><h3>Engineering</h3><p>Owns architecture, delivery, and the security posture.</p></article>
+            <article class="module"><span class="module-k">Lead</span><h3>Insurance Domain</h3><p>Subject-matter guidance on carriers, compliance, and agency operations.</p></article>
+            <article class="module"><span class="module-k">Lead</span><h3>Go-to-Market</h3><p>Owns pricing, partnerships, and the path to first revenue.</p></article>
+          </div>
+          <p class="footnote">Governance: a weekly steering review with a single accountable owner per decision.</p>
+        </section>
+
+        <!-- 13 · RISKS -->
+        <section class="page" id="page-risks" data-title="Risks &amp; Mitigation" aria-labelledby="rk-h">
+          <p class="eyebrow">13 — Risks &amp; Mitigation</p>
+          <h2 class="page-title" id="rk-h">The risks we can name, we can plan for.</h2>
+          <p class="lede">
+            The largest risks are known and addressable. Here is how we intend to blunt each one.
+          </p>
+          <div class="table-wrap">
+            <table class="risk-table">
+              <thead>
+                <tr><th scope="col">Risk</th><th scope="col">Severity</th><th scope="col">Mitigation</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Carrier data access &amp; contracts</td><td><span class="sev sev-high">High</span></td><td>Lead with IVANS standards; sequence direct-carrier deals behind design-partner demand.</td></tr>
+                <tr><td>Migration friction from incumbents</td><td><span class="sev sev-high">High</span></td><td>Build import tooling and a guided, paid onboarding motion from Phase 1.</td></tr>
+                <tr><td>Long enterprise sales cycles</td><td><span class="sev sev-med">Medium</span></td><td>Start with SMB agencies that can adopt without a services army.</td></tr>
+                <tr><td>Regulatory &amp; compliance scope</td><td><span class="sev sev-med">Medium</span></td><td>SOC 2 and GLBA designed in; domain advisor on staff.</td></tr>
+                <tr><td>Incumbent competitive response</td><td><span class="sev sev-low">Lower</span></td><td>Openness and speed are hard for legacy architectures to copy quickly.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- 14 · THE ASK -->
+        <section class="page page-ask" id="page-ask" data-title="The Ask" aria-labelledby="ak-h">
+          <p class="eyebrow">14 — Next Steps</p>
+          <h2 class="page-title" id="ak-h">What we're asking for.</h2>
+          <p class="lede">
+            Approval to move from design into a funded Phase 1 build, and help lining up the
+            first design partners.
+          </p>
+          <ol class="ask-list">
+            <li><span class="ask-num">1</span><div><h3>Green-light Phase 1</h3><p>Fund the foundation build through Q4 2026.</p></div></li>
+            <li><span class="ask-num">2</span><div><h3>Commit a design-partner slate</h3><p>Introduce 3–5 friendly agencies willing to build with us.</p></div></li>
+            <li><span class="ask-num">3</span><div><h3>Confirm the principles</h3><p>Ratify the vision on page 05 as the bar every decision is held to.</p></div></li>
+          </ol>
+          <p class="ask-close">Catalyst — the operating system for the modern insurance agency.</p>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="/deck/deck.js"></script>
+</body>
+
+</html>

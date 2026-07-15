@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Schema & BPMN Workbench — Open Schema Foundation</title>
+  <meta name="description" content="Workbench for defining business data schemas and business process flows using React Flow and Type.js.">
+  <meta name="robots" content="noindex, nofollow">
+
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- React Flow styles -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@xyflow/react@12.11.2/dist/style.css">
+
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/schema.css">
+  
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.png">
+</head>
+
+<body class="schema-page-body">
+  
+  <!-- Site Header -->
+  <header class="schema-header">
+    <a href="/" class="schema-brand" id="header-brand-logo">
+      OpenSchema<span class="logo-accent">.foundation</span>
+    </a>
+    <div class="header-user-actions">
+      <div class="user-display-info" id="auth-root">
+        <!-- React Auth widget mounts here -->
+      </div>
+    </div>
+  </header>
+
+  <!-- React Workbench App mounts here -->
+  <div id="schema-workbench-root" style="flex: 1; display: flex; overflow: hidden;"></div>
+
+  <!-- React Auth Modal Root -->
+  <div id="auth-modal-root"></div>
+
+  <!-- React Bundle containing all dashboard logic and state -->
+  <script src="js/app.js"></script>
+</body>
+
+</html>
