@@ -19,11 +19,15 @@ import {
 function AuthApp() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
-  const [username, setUsername] = useState('');
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [username, setUsername] = useState(''); // email for login
   const [password, setPassword] = useState('');
+  const [regUsername, setRegUsername] = useState(''); // email for registration
+  const [regPassword, setRegPassword] = useState(''); // password for registration
   const [infoMessage, setInfoMessage] = useState('');
   const [messageType, setMessageType] = useState(''); // 'success' | 'info' | 'error'
+  const [regInfoMessage, setRegInfoMessage] = useState('');
+  const [regMessageType, setRegMessageType] = useState(''); // 'success' | 'info' | 'error'
 
   const { user, login, register, loading, error, setError, logout } = useAuth();
 
@@ -53,13 +57,6 @@ function AuthApp() {
     }
   }, [user]);
 
-  const handleTabChange = (nextMode) => {
-    setMode(nextMode);
-    setInfoMessage('');
-    setMessageType('');
-    setError(null);
-  };
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setUsername('');
@@ -69,41 +66,70 @@ function AuthApp() {
     setError(null);
   };
 
-  const handleSubmit = async (event) => {
+  const handleCloseRegisterModal = () => {
+    setIsRegisterModalOpen(false);
+    setRegUsername('');
+    setRegPassword('');
+    setRegInfoMessage('');
+    setRegMessageType('');
+  };
+
+  const handleLoginSubmit = async (event) => {
     event.preventDefault();
     const trimmedUsername = username.trim();
-    if (trimmedUsername.length < 3 || password.length < 8) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedUsername)) {
       setMessageType('error');
-      setInfoMessage('Username must be 3+ characters and password 8+ characters.');
+      setInfoMessage('Username must be a valid email address.');
       return;
     }
 
     setMessageType('info');
     setInfoMessage('Working…');
 
-    if (mode === 'register') {
-      const result = await register(trimmedUsername, password);
-      if (result.success) {
-        setMessageType('success');
-        setInfoMessage(`Account created for "${trimmedUsername}". You can log in now.`);
-        setUsername('');
-        setPassword('');
-        setMode('login');
-      } else {
-        setMessageType('error');
-        setInfoMessage(result.error || 'Something went wrong.');
-      }
+    const result = await login(trimmedUsername, password);
+    if (result.success) {
+      setMessageType('success');
+      setInfoMessage('Signed in. Opening Open Schema portal…');
+      handleCloseModal();
+      window.location.assign('/schema.html');
     } else {
-      const result = await login(trimmedUsername, password);
-      if (result.success) {
-        setMessageType('success');
-        setInfoMessage('Signed in. Opening Open Schema portal…');
-        handleCloseModal();
-        window.location.assign('/schema.html');
-      } else {
-        setMessageType('error');
-        setInfoMessage(result.error || 'Something went wrong.');
-      }
+      setMessageType('error');
+      setInfoMessage(result.error || 'Invalid credentials.');
+    }
+  };
+
+  const handleRegisterSubmit = async (event) => {
+    event.preventDefault();
+    const trimmedUsername = regUsername.trim();
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedUsername)) {
+      setRegMessageType('error');
+      setRegInfoMessage('Email address format is invalid.');
+      return;
+    }
+
+    const complexity = checkPasswordComplexity(regPassword);
+    if (!Object.values(complexity).every(Boolean)) {
+      setRegMessageType('error');
+      setRegInfoMessage('Password does not satisfy all complexity requirements.');
+      return;
+    }
+
+    setRegMessageType('info');
+    setRegInfoMessage('Creating account…');
+
+    const result = await register(trimmedUsername, regPassword);
+    if (result.success) {
+      setRegMessageType('success');
+      setRegInfoMessage(`User "${trimmedUsername}" created successfully.`);
+      setTimeout(() => {
+        handleCloseRegisterModal();
+      }, 1500);
+    } else {
+      setRegMessageType('error');
+      setRegInfoMessage(result.error || 'Registration failed.');
     }
   };
 
@@ -116,9 +142,25 @@ function AuthApp() {
     }
   };
 
+  const checkPasswordComplexity = (p) => {
+    return {
+      hasMinLength: p.length >= 8,
+      hasUpper: /[A-Z]/.test(p),
+      hasLower: /[a-z]/.test(p),
+      hasDigit: /\d/.test(p),
+      hasSpecial: /[@$!%*?&]/.test(p)
+    };
+  };
+
+  const pComplexity = checkPasswordComplexity(regPassword);
+
   const displayedMessage = infoMessage || error;
   const isError = messageType === 'error' || error;
   const messageClass = `auth-message${isError ? ' is-error' : messageType ? ` is-${messageType}` : ''}`;
+
+  const regDisplayedMessage = regInfoMessage;
+  const regIsError = regMessageType === 'error';
+  const regMessageClass = `auth-message${regIsError ? ' is-error' : regMessageType ? ` is-${regMessageType}` : ''}`;
 
   const modalContent = isModalOpen ? (
     <div className="modal-overlay" onClick={handleCloseModal}>
@@ -130,37 +172,18 @@ function AuthApp() {
         <h1>
           Covalent<span className="auth-mark">Flow</span>
         </h1>
-        <p className="auth-sub">Sign in to access the schema portal.</p>
+        <p className="auth-sub" style={{ margin: '0 0 1.5rem 0' }}>Sign in to access the schema portal.</p>
 
-        <div className="auth-tabs" role="tablist">
-          <button
-            type="button"
-            className={`auth-tab ${mode === 'login' ? 'is-active' : ''}`}
-            onClick={() => handleTabChange('login')}
-            role="tab"
-          >
-            Log in
-          </button>
-          <button
-            type="button"
-            className={`auth-tab ${mode === 'register' ? 'is-active' : ''}`}
-            onClick={() => handleTabChange('register')}
-            role="tab"
-          >
-            Register
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} noValidate>
-          <label htmlFor="username">Username</label>
+        <form onSubmit={handleLoginSubmit} noValidate>
+          <label htmlFor="username">Email Address</label>
           <input
             id="username"
             name="username"
-            type="text"
-            autoComplete="username"
+            type="email"
+            autoComplete="email"
+            placeholder="e.g. admin@openschema.foundation"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            minLength={3}
             required
           />
 
@@ -169,21 +192,95 @@ function AuthApp() {
             id="password"
             name="password"
             type="password"
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            autoComplete="current-password"
+            placeholder="Enter your password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            minLength={8}
             required
           />
 
-          <button type="submit" id="submit-btn" disabled={loading}>
-            {mode === 'login' ? 'Log in' : 'Create account'}
+          <button type="submit" id="submit-btn" disabled={loading} style={{ marginTop: '1rem' }}>
+            Log in
           </button>
         </form>
 
         {displayedMessage && (
           <p className={messageClass} role="status" aria-live="polite">
             {displayedMessage}
+          </p>
+        )}
+      </div>
+    </div>
+  ) : null;
+
+  const registerModalContent = isRegisterModalOpen ? (
+    <div className="modal-overlay" onClick={handleCloseRegisterModal}>
+      <div className="auth" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '440px' }}>
+        <button type="button" className="modal-close-btn" onClick={handleCloseRegisterModal} aria-label="Close modal">
+          &times;
+        </button>
+        <p className="auth-eyebrow">Admin Console</p>
+        <h1>Register New User</h1>
+        <p className="auth-sub" style={{ margin: '0 0 1.25rem 0' }}>Define credentials for a new authorized portal user.</p>
+
+        <form onSubmit={handleRegisterSubmit} noValidate>
+          <label htmlFor="reg-username">Email Address</label>
+          <input
+            id="reg-username"
+            name="reg-username"
+            type="email"
+            autoComplete="off"
+            placeholder="e.g. user@openschema.foundation"
+            value={regUsername}
+            onChange={(e) => setRegUsername(e.target.value)}
+            required
+          />
+
+          <label htmlFor="reg-password">Password</label>
+          <input
+            id="reg-password"
+            name="reg-password"
+            type="password"
+            autoComplete="new-password"
+            placeholder="Create password"
+            value={regPassword}
+            onChange={(e) => setRegPassword(e.target.value)}
+            required
+          />
+
+          {/* Dynamic Complexity Checklist */}
+          <div style={{ marginTop: '0.8rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', background: 'rgba(0,0,0,0.15)', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <p style={{ margin: '0 0 0.4rem 0', fontSize: '0.75rem', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Password Requirements</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem' }}>
+              <span style={{ color: pComplexity.hasMinLength ? '#22c55e' : '#64748b' }}>{pComplexity.hasMinLength ? "✓" : "●"}</span>
+              <span style={{ color: pComplexity.hasMinLength ? '#f8fafc' : '#94a3b8' }}>At least 8 characters</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem' }}>
+              <span style={{ color: pComplexity.hasUpper ? '#22c55e' : '#64748b' }}>{pComplexity.hasUpper ? "✓" : "●"}</span>
+              <span style={{ color: pComplexity.hasUpper ? '#f8fafc' : '#94a3b8' }}>One uppercase letter (A-Z)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem' }}>
+              <span style={{ color: pComplexity.hasLower ? '#22c55e' : '#64748b' }}>{pComplexity.hasLower ? "✓" : "●"}</span>
+              <span style={{ color: pComplexity.hasLower ? '#f8fafc' : '#94a3b8' }}>One lowercase letter (a-z)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem' }}>
+              <span style={{ color: pComplexity.hasDigit ? '#22c55e' : '#64748b' }}>{pComplexity.hasDigit ? "✓" : "●"}</span>
+              <span style={{ color: pComplexity.hasDigit ? '#f8fafc' : '#94a3b8' }}>One numeric digit (0-9)</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem' }}>
+              <span style={{ color: pComplexity.hasSpecial ? '#22c55e' : '#64748b' }}>{pComplexity.hasSpecial ? "✓" : "●"}</span>
+              <span style={{ color: pComplexity.hasSpecial ? '#f8fafc' : '#94a3b8' }}>One special symbol (@$!%*?&)</span>
+            </div>
+          </div>
+
+          <button type="submit" id="reg-submit-btn" disabled={loading} style={{ marginTop: '1.25rem' }}>
+            Register User
+          </button>
+        </form>
+
+        {regDisplayedMessage && (
+          <p className={regMessageClass} role="status" aria-live="polite" style={{ marginTop: '0.8rem' }}>
+            {regDisplayedMessage}
           </p>
         )}
       </div>
@@ -220,6 +317,19 @@ function AuthApp() {
               </a>
               <button 
                 type="button" 
+                className="dropdown-link" 
+                style={{ width: '100%', textAlign: 'left', background: 'transparent', border: 0, padding: '0.65rem 1rem', cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsDropdownOpen(false);
+                  setIsRegisterModalOpen(true);
+                }}
+                id="dropdown-register-btn"
+              >
+                Register New User
+              </button>
+              <button 
+                type="button" 
                 className="btn-dropdown-logout" 
                 onClick={handleLogout}
                 id="dropdown-logout-btn"
@@ -241,6 +351,7 @@ function AuthApp() {
       )}
 
       {modalRoot && modalContent && createPortal(modalContent, modalRoot)}
+      {modalRoot && registerModalContent && createPortal(registerModalContent, modalRoot)}
     </div>
   );
 }

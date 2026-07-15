@@ -103,14 +103,24 @@ function requireAuthPage(req, res, next) {
  * Validation
  * ------------------------------------------------------------------ */
 
-function validateCredentials(body) {
+function validateCredentials(body, isRegister = false) {
   const username = typeof body.username === 'string' ? body.username.trim() : '';
   const password = typeof body.password === 'string' ? body.password : '';
-  if (username.length < MIN_USERNAME) {
-    return { error: `username must be at least ${MIN_USERNAME} characters` };
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(username)) {
+    return { error: 'Username must be a valid email address' };
   }
-  if (password.length < MIN_PASSWORD) {
-    return { error: `password must be at least ${MIN_PASSWORD} characters` };
+
+  if (isRegister) {
+    const complexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!complexityRegex.test(password)) {
+      return { error: 'Password must be at least 8 characters long, contain an uppercase letter, a lowercase letter, a number, and a special character (e.g. @$!%*?&).' };
+    }
+  } else {
+    if (password.length < MIN_PASSWORD) {
+      return { error: `Password must be at least ${MIN_PASSWORD} characters` };
+    }
   }
   return { username, password };
 }
@@ -122,7 +132,13 @@ const apiApp = express();
 apiApp.use(express.json());
 
 apiApp.post('/api/register', async (req, res) => {
-  const { username, password, error } = validateCredentials(req.body || {});
+  // Gate registration: only logged-in users can register new accounts
+  const session = currentUser(req);
+  if (!session) {
+    return res.status(401).json({ error: 'Authentication required. Only logged in users can register new accounts.' });
+  }
+
+  const { username, password, error } = validateCredentials(req.body || {}, true);
   if (error) return res.status(400).json({ error });
 
   try {
