@@ -1,0 +1,207 @@
+{
+  "entities": {
+    "employee": {
+      "title": "Employee Entity",
+      "icon": "👤",
+      "category": "Resources",
+      "desc": "Generic internal worker structure for capturing standard staff records, salaries, and employment timelines.",
+      "flowTitle": "Employee Onboarding Workflow",
+      "flowDesc": "Verifies worker credentials, fires compliance check integrations, generates employment documents, and configures corporate accounts.",
+      "schema": [
+        { "name": "id", "type": "string", "desc": "Unique employee database identifier.", "constraints": "UUID, Primary Key" },
+        { "name": "first_name", "type": "string", "desc": "Legal first name.", "constraints": "Required, max 50 chars" },
+        { "name": "last_name", "type": "string", "desc": "Legal last name.", "constraints": "Required, max 50 chars" },
+        { "name": "email", "type": "string", "desc": "Official organizational email.", "constraints": "Required, Unique, Email validation" },
+        { "name": "role", "type": "string", "desc": "Organizational position title.", "constraints": "Required, ENUM" },
+        { "name": "department", "type": "string", "desc": "Target corporate cost center.", "constraints": "Required, ENUM" },
+        { "name": "salary", "type": "number", "desc": "Annual base salary rate.", "constraints": "Required, Min 0.00" },
+        { "name": "hire_date", "type": "date", "desc": "Employment contract commencement date.", "constraints": "Required" },
+        { "name": "status", "type": "string", "desc": "Current working state.", "constraints": "ENUM (active, inactive, leave)" }
+      ],
+      "bpmn": {
+        "nodes": [
+          { "id": "start", "type": "start", "label": "Start Onboard", "position": { "x": 50, "y": 120 } },
+          { "id": "verify_docs", "type": "user_input", "label": "Verify Documents", "position": { "x": 180, "y": 90 }, "assignee": "HR Generalist", "inputs": "ID, Credentials Docs", "outputs": "ValidStatus (boolean)", "details": "Validates identification documents, verifying tax status and eligibility." },
+          { "id": "bg_check", "type": "webhook", "label": "Background Check", "position": { "x": 370, "y": 90 }, "url": "https://api.checkr.com/v1/verify", "inputs": "first_name, last_name, ssn", "outputs": "score, status", "details": "Automated background and security compliance screening check via web hook." },
+          { "id": "check_gate", "type": "gateway", "label": "Passed Screening?", "position": { "x": 560, "y": 100 }, "condition": "bg_check.status == 'cleared'", "details": "Conditional check routing execution based on background clearance status." },
+          { "id": "contract_sign", "type": "user_input", "label": "Sign Contract", "position": { "x": 700, "y": 90 }, "assignee": "Employee candidate", "inputs": "Template ID, Salary, Role", "outputs": "Signature document key", "details": "Sends digital employment agreements to candidate. execution waits until completed." },
+          { "id": "it_provision", "type": "webhook", "label": "IT Account Setup", "position": { "x": 890, "y": 90 }, "url": "https://api.okta.com/v1/users", "inputs": "email, first_name, role", "outputs": "okta_id, password_setup_url", "details": "Triggers Okta API workflows to create company logins and access controls." },
+          { "id": "end", "type": "end", "label": "Onboard Complete", "position": { "x": 1080, "y": 120 } }
+        ],
+        "edges": [
+          { "id": "e-start-verify", "source": "start", "target": "verify_docs" },
+          { "id": "e-verify-bg", "source": "verify_docs", "target": "bg_check" },
+          { "id": "e-bg-gate", "source": "bg_check", "target": "check_gate" },
+          { "id": "e-gate-sign", "source": "check_gate", "target": "contract_sign" },
+          { "id": "e-sign-it", "source": "contract_sign", "target": "it_provision" },
+          { "id": "e-it-end", "source": "it_provision", "target": "end" }
+        ],
+        "steps": [
+          { "node": "start", "log": "Starting Employee Onboarding Process for candidate...", "type": "system" },
+          { "node": "verify_docs", "log": "HR Generalist triggered task: Verification of physical credentials docs...", "type": "info" },
+          { "node": "verify_docs", "log": "Verify Documents task completed: valid status confirmed.", "type": "success" },
+          { "node": "bg_check", "log": "Webhook triggered: POST https://api.checkr.com/v1/verify...", "type": "info" },
+          { "node": "bg_check", "log": "Webhook response: 200 OK. Clearance status: 'cleared'.", "type": "success" },
+          { "node": "check_gate", "log": "Conditional Gate: evaluating clearance status == 'cleared'. Condition satisfied.", "type": "system" },
+          { "node": "contract_sign", "log": "Pending User action: Waiting for document signature capture...", "type": "warning" },
+          { "node": "contract_sign", "log": "Candidate signed contract document key: 'doc_552912_signed'.", "type": "success" },
+          { "node": "it_provision", "log": "Webhook triggered: POST https://api.okta.com/v1/users...", "type": "info" },
+          { "node": "it_provision", "log": "Webhook response: 201 Created. okta_id: 'usr_abc8921'.", "type": "success" },
+          { "node": "end", "log": "Employee Onboarding Workflow complete. Record status changed to 'active'.", "type": "success" }
+        ]
+      }
+    },
+    "client": {
+      "title": "Client Entity",
+      "icon": "🏢",
+      "category": "Commercial",
+      "desc": "Corporate or individual buyer database schema capturing demographics, industry classification, and billing specifications.",
+      "flowTitle": "Client Intake & KYC Workflow",
+      "flowDesc": "Screens customer prospects against compliance lists, auto-registers customer profiles, and generates portal access.",
+      "schema": [
+        { "name": "id", "type": "string", "desc": "Unique client record identifier.", "constraints": "UUID, Primary Key" },
+        { "name": "company_name", "type": "string", "desc": "Full legal business organization name.", "constraints": "Required, max 100 chars" },
+        { "name": "contact_name", "type": "string", "desc": "Primary administrative point of contact.", "constraints": "Required" },
+        { "name": "email", "type": "string", "desc": "Contact email address.", "constraints": "Required, Email validation" },
+        { "name": "phone", "type": "string", "desc": "Contact phone number.", "constraints": "E.164 standard format" },
+        { "name": "industry", "type": "string", "desc": "Primary economic sector grouping.", "constraints": "Optional" },
+        { "name": "billing_address", "type": "json", "desc": "Structured billing coordinates mapping.", "constraints": "Required, JSON structure" },
+        { "name": "status", "type": "string", "desc": "Client account state.", "constraints": "ENUM (lead, active, suspended, closed)" }
+      ],
+      "bpmn": {
+        "nodes": [
+          { "id": "start", "type": "start", "label": "Start Intake", "position": { "x": 50, "y": 120 } },
+          { "id": "kyc_screen", "type": "webhook", "label": "KYC Screener", "position": { "x": 180, "y": 90 }, "url": "https://api.complyadvantage.com/v3/screen", "inputs": "company_name, country", "outputs": "risk_level, match_status", "details": "Fires automated sanction screening search check matching AML requirements." },
+          { "id": "verify_gate", "type": "gateway", "label": "Clear?", "position": { "x": 370, "y": 100 }, "condition": "risk_level == 'low'", "details": "Validates screening output to route client approvals." },
+          { "id": "assign_rep", "type": "user_input", "label": "Assign Rep", "position": { "x": 500, "y": 90 }, "assignee": "Sales Team Lead", "inputs": "industry, company_name", "outputs": "account_rep_id", "details": "Manual assignment of matching Account Manager based on region/industry." },
+          { "id": "welcome_email", "type": "webhook", "label": "Welcome Setup", "position": { "x": 690, "y": 90 }, "url": "https://api.sendgrid.com/v3/mail/send", "inputs": "email, contact_name", "outputs": "sendgrid_status", "details": "Drafts and executes welcome templates containing portal login linkages." },
+          { "id": "end", "type": "end", "label": "Client Active", "position": { "x": 880, "y": 120 } }
+        ],
+        "edges": [
+          { "id": "e-start-kyc", "source": "start", "target": "kyc_screen" },
+          { "id": "e-kyc-gate", "source": "kyc_screen", "target": "verify_gate" },
+          { "id": "e-gate-assign", "source": "verify_gate", "target": "assign_rep" },
+          { "id": "e-assign-mail", "source": "assign_rep", "target": "welcome_email" },
+          { "id": "e-mail-end", "source": "welcome_email", "target": "end" }
+        ],
+        "steps": [
+          { "node": "start", "log": "Intake pipeline started for client lead...", "type": "system" },
+          { "node": "kyc_screen", "log": "Webhook triggered: POST AML screener on database records...", "type": "info" },
+          { "node": "kyc_screen", "log": "Sanction screening completed. risk_level: 'low', matches: 0.", "type": "success" },
+          { "node": "verify_gate", "log": "Evaluating conditions: risk_level == 'low' (satisfied). Routing to task.", "type": "system" },
+          { "node": "assign_rep", "log": "Sales Team Lead: choosing Account Representative assignment...", "type": "info" },
+          { "node": "assign_rep", "log": "Rep assigned successfully. rep_id: 'usr_rep_john_doe'.", "type": "success" },
+          { "node": "welcome_email", "log": "Webhook triggered: Sending Welcome Portal link details via SMTP...", "type": "info" },
+          { "node": "welcome_email", "log": "SMTP Mail sent successfully. SendGrid message ID captured.", "type": "success" },
+          { "node": "end", "log": "Client Intake Workflow complete. Status promoted to 'active'.", "type": "success" }
+        ]
+      }
+    },
+    "order": {
+      "title": "Order Entity",
+      "icon": "🛒",
+      "category": "Commercial",
+      "desc": "Generic sales transaction order representing items purchased, net pricing totals, payment details, and fulfillment state.",
+      "flowTitle": "Order Fulfillment Workflow",
+      "flowDesc": "Queries product databases, captures credit card payments, alerts warehouse packaging, and delivers shipping confirmation.",
+      "schema": [
+        { "name": "id", "type": "string", "desc": "Unique transaction identifier.", "constraints": "UUID, Primary Key" },
+        { "name": "client_id", "type": "string", "desc": "Reference ID of purchasing client entity.", "constraints": "Required, Foreign Key -> clients.id" },
+        { "name": "order_date", "type": "date", "desc": "Timestamp when order was finalized.", "constraints": "Required" },
+        { "name": "total_amount", "type": "number", "desc": "Net order dollar amount value.", "constraints": "Required, Min 0.00" },
+        { "name": "items", "type": "json", "desc": "Item list array containing skus, quantities, and pricing.", "constraints": "Required, Array content" },
+        { "name": "status", "type": "string", "desc": "Order execution status.", "constraints": "ENUM (pending, paid, shipped, complete, cancelled)" },
+        { "name": "payment_method", "type": "string", "desc": "Credit card, transfer, or invoice mechanism.", "constraints": "Required, ENUM" }
+      ],
+      "bpmn": {
+        "nodes": [
+          { "id": "start", "type": "start", "label": "Order Placed", "position": { "x": 50, "y": 120 } },
+          { "id": "inv_check", "type": "webhook", "label": "Inventory Check", "position": { "x": 180, "y": 90 }, "url": "https://api.erp.internal/v1/inventory/verify", "inputs": "items", "outputs": "in_stock", "details": "Fires backend API queries to verify matching skus and quantities are in stock." },
+          { "id": "stock_gate", "type": "gateway", "label": "In Stock?", "position": { "x": 370, "y": 100 }, "condition": "inv_check.in_stock == true", "details": "Conditional checkout gate verifying stock levels before processing payments." },
+          { "id": "pay_process", "type": "webhook", "label": "Charge Card", "position": { "x": 500, "y": 90 }, "url": "https://api.stripe.com/v1/charges", "inputs": "total_amount, token", "outputs": "charge_id, success", "details": "Submits transaction parameters to payment processor endpoints." },
+          { "id": "warehouse_pack", "type": "user_input", "label": "Pack & Label", "position": { "x": 690, "y": 90 }, "assignee": "Fulfillment Operative", "inputs": "items, shipping_address", "outputs": "tracking_code", "details": "Creates warehouse inventory picker alerts, packages matching parts, and affixes carrier labels." },
+          { "id": "email_tracking", "type": "webhook", "label": "Email Tracking", "position": { "x": 880, "y": 90 }, "url": "https://api.postmarkapp.com/email", "inputs": "email, tracking_code", "outputs": "email_sent", "details": "Sends automated order delivery updates and links to parcel status dashboards." },
+          { "id": "end", "type": "end", "label": "Complete", "position": { "x": 1070, "y": 120 } }
+        ],
+        "edges": [
+          { "id": "e-start-inv", "source": "start", "target": "inv_check" },
+          { "id": "e-inv-gate", "source": "inv_check", "target": "stock_gate" },
+          { "id": "e-gate-pay", "source": "stock_gate", "target": "pay_process" },
+          { "id": "e-pay-pack", "source": "pay_process", "target": "warehouse_pack" },
+          { "id": "e-pack-mail", "source": "warehouse_pack", "target": "email_tracking" },
+          { "id": "e-mail-end", "source": "email_tracking", "target": "end" }
+        ],
+        "steps": [
+          { "node": "start", "log": "Sales Order processing initialized...", "type": "system" },
+          { "node": "inv_check", "log": "Webhook triggered: Checking warehouse stock status in interior ERP databases...", "type": "info" },
+          { "node": "inv_check", "log": "Inventory matched. Stock status: 'true'.", "type": "success" },
+          { "node": "stock_gate", "log": "Conditional evaluated: inv_check.in_stock == true (satisfied). Proceeding.", "type": "system" },
+          { "node": "pay_process", "log": "Webhook triggered: Capture transaction authorization via Stripe...", "type": "info" },
+          { "node": "pay_process", "log": "Transaction authorization complete: charge_id 'ch_90218_auth' capture successful.", "type": "success" },
+          { "node": "warehouse_pack", "log": "Fulfillment Operative: Packing items and printing shipping waybill labels...", "type": "info" },
+          { "node": "warehouse_pack", "log": "Package prepared. Carrier tracking number registered: '1Z-999-AA1-01-2345'.", "type": "success" },
+          { "node": "email_tracking", "log": "Webhook triggered: Broadcasting tracking keys to purchaser inbox...", "type": "info" },
+          { "node": "email_tracking", "log": "Notification successfully processed by SMTP relay.", "type": "success" },
+          { "node": "end", "log": "Order fulfillment complete. Order status updated to 'shipped'.", "type": "success" }
+        ]
+      }
+    },
+    "ledger": {
+      "title": "Ledger Entity",
+      "icon": "📒",
+      "category": "Financials",
+      "desc": "Financial ledger database rows recording accounting entries, descriptions, debits, and credits complying with double-entry principles.",
+      "flowTitle": "Ledger Reconciliation Flow",
+      "flowDesc": "Aggregates bank statements, executes automated match validation formulas, registers adjustments, and locks accounts.",
+      "schema": [
+        { "name": "id", "type": "string", "desc": "Unique ledger item line index.", "constraints": "UUID, Primary Key" },
+        { "name": "transaction_date", "type": "date", "desc": "Double-entry bookkeeping journal date.", "constraints": "Required" },
+        { "name": "account_code", "type": "string", "desc": "Target chart of accounts category code.", "constraints": "Required, matches CoA format" },
+        { "name": "description", "type": "string", "desc": "Transaction memo detailing purchase context.", "constraints": "Required, max 250 chars" },
+        { "name": "debit", "type": "number", "desc": "Debit allocation value.", "constraints": "Min 0.00, mutually exclusive with credit" },
+        { "name": "credit", "type": "number", "desc": "Credit allocation value.", "constraints": "Min 0.00, mutually exclusive with debit" },
+        { "name": "created_by", "type": "string", "desc": "Corporate credentials posting transaction.", "constraints": "Required" }
+      ],
+      "bpmn": {
+        "nodes": [
+          { "id": "start", "type": "start", "label": "Period Closed", "position": { "x": 50, "y": 120 } },
+          { "id": "fetch_txns", "type": "webhook", "label": "Fetch Statements", "position": { "x": 180, "y": 90 }, "url": "https://api.plaid.com/v2/transactions/get", "inputs": "account_ids, start_date", "outputs": "transactions", "details": "Downloads official banking statements via Plaid transaction matching APIs." },
+          { "id": "auto_match", "type": "webhook", "label": "Run Matcher", "position": { "x": 370, "y": 90 }, "url": "https://api.reconcile.internal/v1/match", "inputs": "transactions, ledger_lines", "outputs": "match_rate, unmapped_count", "details": "Runs rule-based fuzzy matching algorithms correlating ledger codes with bank entries." },
+          { "id": "match_gate", "type": "gateway", "label": "100% Match?", "position": { "x": 560, "y": 100 }, "condition": "auto_match.unmapped_count == 0", "details": "Conditional gate checking if all bank statements reconciliated automatically." },
+          { "id": "manual_rev", "type": "user_input", "label": "Review Exceptions", "position": { "x": 700, "y": 90 }, "assignee": "Senior Accountant", "inputs": "unmapped_transactions", "outputs": "posted_adjustments", "details": "Creates accountant exceptions reviews queues to correlate unmapped invoices manually." },
+          { "id": "post_adjust", "type": "webhook", "label": "Post Adjustments", "position": { "x": 890, "y": 90 }, "url": "https://api.ledger.internal/v1/adjust", "inputs": "posted_adjustments", "outputs": "ledger_updated", "details": "Commits adjust items back into journal ledgers to resolve exceptions." },
+          { "id": "close_period", "type": "webhook", "label": "Lock Books", "position": { "x": 1080, "y": 90 }, "url": "https://api.ledger.internal/v1/period/lock", "inputs": "period_id", "outputs": "status", "details": "Locks accounting periods preventing further posts and generating ledger exports." },
+          { "id": "end", "type": "end", "label": "Reconciled", "position": { "x": 1270, "y": 120 } }
+        ],
+        "edges": [
+          { "id": "e-start-fetch", "source": "start", "target": "fetch_txns" },
+          { "id": "e-fetch-match", "source": "fetch_txns", "target": "auto_match" },
+          { "id": "e-match-gate", "source": "auto_match", "target": "match_gate" },
+          { "id": "e-gate-rev", "source": "match_gate", "target": "manual_rev" },
+          { "id": "e-rev-post", "source": "manual_rev", "target": "post_adjust" },
+          { "id": "e-post-close", "source": "post_adjust", "target": "close_period" },
+          { "id": "e-close-end", "source": "close_period", "target": "end" }
+        ],
+        "steps": [
+          { "node": "start", "log": "Ledger monthly reconciliation process started...", "type": "system" },
+          { "node": "fetch_txns", "log": "Webhook triggered: pulling bank transaction statements via Plaid interface...", "type": "info" },
+          { "node": "fetch_txns", "log": "Statement fetch completed: parsed 42 ledger entries.", "type": "success" },
+          { "node": "auto_match", "log": "Webhook triggered: checking bank statements against records...", "type": "info" },
+          { "node": "auto_match", "log": "Reconciliation match complete. Unmapped count: 3 entries.", "type": "warning" },
+          { "node": "match_gate", "log": "Evaluating conditions: auto_match.unmapped_count == 0 (unmet). Routing to exceptions.", "type": "system" },
+          { "node": "manual_rev", "log": "Senior Accountant: resolving remaining bank mismatch entries...", "type": "info" },
+          { "node": "manual_rev", "log": "Accountant manually mapped remaining 3 statements to chart accounts.", "type": "success" },
+          { "node": "post_adjust", "log": "Webhook triggered: registering correction ledger posts...", "type": "info" },
+          { "node": "post_adjust", "log": "Adjustment posts completed. Accounting records verified.", "type": "success" },
+          { "node": "close_period", "log": "Webhook triggered: sealing period books...", "type": "info" },
+          { "node": "close_period", "log": "Lock complete. Period sealed against editing.", "type": "success" },
+          { "node": "end", "log": "Ledger reconciliation flow completed successfully.", "type": "success" }
+        ]
+      }
+    }
+  },
+  "relationships": [
+    { "id": "rel-client-order", "source": "client", "target": "order", "type": "one-to-many" },
+    { "id": "rel-order-ledger", "source": "order", "target": "ledger", "type": "many-to-one" }
+  ]
+}

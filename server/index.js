@@ -40,6 +40,18 @@ if (!process.env.SESSION_SECRET) {
 
 store.init();
 
+// Ensure the workbench JSON database exists. Seed it if missing.
+const WORKBENCH_FILE = path.join(ROOT, 'data', 'workbench.json');
+const SEED_FILE = path.join(__dirname, 'workbench.seed.json');
+if (!fs.existsSync(WORKBENCH_FILE)) {
+  if (fs.existsSync(SEED_FILE)) {
+    fs.copyFileSync(SEED_FILE, WORKBENCH_FILE);
+    console.log('Seeded workbench database at data/workbench.json');
+  } else {
+    console.error('Seed file not found at:', SEED_FILE);
+  }
+}
+
 /* ------------------------------------------------------------------ *
  * Session token: base64url(payload).hmac — signed, stateless, expiring.
  * ------------------------------------------------------------------ */
@@ -187,8 +199,6 @@ apiApp.get('/api/me', (req, res) => {
   if (!session) return res.status(401).json({ error: 'not authenticated' });
   return res.json({ username: session.u });
 });
-
-const WORKBENCH_FILE = path.join(ROOT, 'data', 'workbench.json');
 
 apiApp.get('/api/workbench', (req, res) => {
   const session = currentUser(req);
