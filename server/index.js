@@ -21,8 +21,8 @@ const express = require('express');
 const bcrypt = require('bcryptjs');
 const store = require('./store');
 
-const WEB_PORT = 3000;
-const API_PORT = 3001;
+const WEB_PORT = process.env.PORT || 3000;
+const API_PORT = process.env.API_PORT || 3001;
 
 const ROOT = path.resolve(__dirname, '..');
 const STATIC_DIR = fs.existsSync(path.join(ROOT, 'dist')) ? path.join(ROOT, 'dist') : ROOT;
