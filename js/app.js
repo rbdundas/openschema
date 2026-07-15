@@ -451,7 +451,8 @@ const reactFlowNodeTypes = {
 /* ------------------------------------------------------------------ *
  * 3. Workbench Entities Raw Database Scaffolding
  * ------------------------------------------------------------------ */
-const initialEntitiesDatabase = {
+const initialEntitiesDatabase = {};
+const deprecatedEntitiesDatabase = {
   employee: {
     title: "Employee Entity",
     icon: "👤",
@@ -657,11 +658,45 @@ const initialEntitiesDatabase = {
  * 4. React Workbench Main Component (Type.js + React Flow)
  * ------------------------------------------------------------------ */
 function SchemaWorkbench() {
+  const [loadingWorkbench, setLoadingWorkbench] = useState(true);
   const [activeEntityKey, setActiveEntityKey] = useState('employee');
   const [activeTab, setActiveTab] = useState('schema'); // 'schema' | 'designer' | 'bpmn'
-  
-  // Entities database loaded directly into component state
-  const [entities, setEntities] = useState(initialEntitiesDatabase);
+  const [entities, setEntities] = useState({});
+  const [relationships, setRelationships] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/workbench')
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to load workbench data");
+        return res.json();
+      })
+      .then(data => {
+        setEntities(data.entities || {});
+        setRelationships(data.relationships || []);
+        setLoadingWorkbench(false);
+      })
+      .catch(err => {
+        console.error("Failed to load workbench data from server:", err);
+        setLoadingWorkbench(false);
+      });
+  }, []);
+
+  const saveWorkbench = (nextEntities, nextRelationships) => {
+    fetch('/api/workbench', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ entities: nextEntities, relationships: nextRelationships })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Failed to save workbench updates to server");
+      return res.json();
+    })
+    .catch(err => {
+      console.error("Workbench Sync Error:", err);
+    });
+  };
   
   // Row-level Visual Editing state
   const [editingRowIndex, setEditingRowIndex] = useState(null);
@@ -681,12 +716,6 @@ function SchemaWorkbench() {
   // React Flow state bindings for Tab 2 (Schema Designer ERD relationships)
   const [erdNodes, setErdNodes, onErdNodesChange] = useNodesState([]);
   const [erdEdges, setErdEdges, onErdEdgesChange] = useEdgesState([]);
-
-  // Relationships state array
-  const [relationships, setRelationships] = useState([
-    { id: "rel-client-order", source: "client", target: "order", type: "one-to-many" },
-    { id: "rel-order-ledger", source: "order", target: "ledger", type: "many-to-one" }
-  ]);
 
   // Sidebar Entity Creator modal state
   const [showAddEntityModal, setShowAddEntityModal] = useState(false);
@@ -883,39 +912,36 @@ function SchemaWorkbench() {
 
   // Handle visual Type.js Visual Grid row edits
   const handleFieldChange = (index, key, value) => {
-    setEntities(prev => {
-      const copy = { ...prev };
-      const fieldsCopy = [...copy[activeEntityKey].schema];
-      fieldsCopy[index] = { ...fieldsCopy[index], [key]: value };
-      copy[activeEntityKey] = { ...copy[activeEntityKey], schema: fieldsCopy };
-      return copy;
-    });
+    const nextEntities = { ...entities };
+    const fieldsCopy = [...nextEntities[activeEntityKey].schema];
+    fieldsCopy[index] = { ...fieldsCopy[index], [key]: value };
+    nextEntities[activeEntityKey] = { ...nextEntities[activeEntityKey], schema: fieldsCopy };
+    setEntities(nextEntities);
+    saveWorkbench(nextEntities, relationships);
   };
 
   const handleAddField = () => {
-    setEntities(prev => {
-      const copy = { ...prev };
-      const fieldsCopy = [...copy[activeEntityKey].schema];
-      fieldsCopy.push({ 
-        name: `new_field_${fieldsCopy.length + 1}`, 
-        type: "string", 
-        desc: "Custom schema property.", 
-        constraints: "Optional" 
-      });
-      copy[activeEntityKey] = { ...copy[activeEntityKey], schema: fieldsCopy };
-      return copy;
+    const nextEntities = { ...entities };
+    const fieldsCopy = [...nextEntities[activeEntityKey].schema];
+    fieldsCopy.push({ 
+      name: `new_field_${fieldsCopy.length + 1}`, 
+      type: "string", 
+      desc: "Custom schema property.", 
+      constraints: "Optional" 
     });
+    nextEntities[activeEntityKey] = { ...nextEntities[activeEntityKey], schema: fieldsCopy };
+    setEntities(nextEntities);
+    saveWorkbench(nextEntities, relationships);
     // Immediately place the newly added field in edit mode
     setEditingRowIndex(activeEntityData.schema.length);
   };
 
   const handleDeleteField = (index) => {
-    setEntities(prev => {
-      const copy = { ...prev };
-      const fieldsCopy = copy[activeEntityKey].schema.filter((_, i) => i !== index);
-      copy[activeEntityKey] = { ...copy[activeEntityKey], schema: fieldsCopy };
-      return copy;
-    });
+    const nextEntities = { ...entities };
+    const fieldsCopy = nextEntities[activeEntityKey].schema.filter((_, i) => i !== index);
+    nextEntities[activeEntityKey] = { ...nextEntities[activeEntityKey], schema: fieldsCopy };
+    setEntities(nextEntities);
+    saveWorkbench(nextEntities, relationships);
     if (editingRowIndex === index) {
       setEditingRowIndex(null);
     } else if (editingRowIndex > index) {
@@ -962,7 +988,9 @@ function SchemaWorkbench() {
       }
     };
 
-    setEntities(prev => ({ ...prev, [key]: newEntityObj }));
+    const nextEntities = { ...entities, [key]: newEntityObj };
+    setEntities(nextEntities);
+    saveWorkbench(nextEntities, relationships);
     setActiveEntityKey(key);
     setShowAddEntityModal(false);
     
@@ -988,13 +1016,17 @@ function SchemaWorkbench() {
       return;
     }
 
-    setRelationships(prev => [...prev, { id, source: relSource, target: relTarget, type: relType }]);
+    const nextRelationships = [...relationships, { id, source: relSource, target: relTarget, type: relType }];
+    setRelationships(nextRelationships);
+    saveWorkbench(entities, nextRelationships);
     addLog(`System: Established relationship [${entities[relSource].title.split(' ')[0]} ➔ ${entities[relTarget].title.split(' ')[0]}] (${relType}).`, "system");
   };
 
   // Delete a relationship link
   const handleDeleteRelationship = (relId) => {
-    setRelationships(prev => prev.filter(r => r.id !== relId));
+    const nextRelationships = relationships.filter(r => r.id !== relId);
+    setRelationships(nextRelationships);
+    saveWorkbench(entities, nextRelationships);
     setSelectedElement(null);
     addLog("System: Deleted selected relationship line from diagram.", "system");
   };
@@ -1043,15 +1075,13 @@ function SchemaWorkbench() {
     }
 
     await new Promise(resolve => setTimeout(resolve, 400));
-    setEntities(prev => {
-      const copy = { ...prev };
-      const fieldsCopy = [...copy[activeEntityKey].schema];
-      
-      const names = additions.map(a => a.name);
-      const filtered = fieldsCopy.filter(f => !names.includes(f.name));
-      copy[activeEntityKey] = { ...copy[activeEntityKey], schema: [...filtered, ...additions] };
-      return copy;
-    });
+    const nextEntities = { ...entities };
+    const fieldsCopy = [...nextEntities[activeEntityKey].schema];
+    const names = additions.map(a => a.name);
+    const filtered = fieldsCopy.filter(f => !names.includes(f.name));
+    nextEntities[activeEntityKey] = { ...nextEntities[activeEntityKey], schema: [...filtered, ...additions] };
+    setEntities(nextEntities);
+    saveWorkbench(nextEntities, relationships);
 
     setLlmPrompt("");
     setLlmWorking(false);
@@ -1081,6 +1111,16 @@ function SchemaWorkbench() {
           isSelected: n.id === clickedNode.id
         }
       })));
+    }
+  };
+
+  const onNodeDragStop = (event, node) => {
+    const nextEntities = { ...entities };
+    const nodeIndex = nextEntities[activeEntityKey].bpmn.nodes.findIndex(n => n.id === node.id);
+    if (nodeIndex !== -1) {
+      nextEntities[activeEntityKey].bpmn.nodes[nodeIndex].position = node.position;
+      setEntities(nextEntities);
+      saveWorkbench(nextEntities, relationships);
     }
   };
 
@@ -1208,6 +1248,21 @@ function SchemaWorkbench() {
     }
     categories[ent.category].push({ key, ...ent });
   });
+
+  if (loadingWorkbench) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '80vh', gap: '1.5rem', flex: 1 }}>
+        <div className="sim-pulse-glow" style={{ width: '60px', height: '60px', borderRadius: '50%', border: '4px solid rgba(6,182,212,0.1)', borderTopColor: '#06b6d4', animation: 'spin 1.2s linear infinite' }} />
+        <p style={{ color: '#94a3b8', fontSize: '0.95rem', letterSpacing: '0.05em' }}>Loading workspace database...</p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="workbench-container" style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
@@ -1570,6 +1625,7 @@ function SchemaWorkbench() {
                     edges={edges}
                     nodeTypes={reactFlowNodeTypes}
                     onNodeClick={onNodeClick}
+                    onNodeDragStop={onNodeDragStop}
                     fitView
                     draggable={true}
                     panOnDrag={true}

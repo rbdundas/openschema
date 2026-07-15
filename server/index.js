@@ -188,6 +188,46 @@ apiApp.get('/api/me', (req, res) => {
   return res.json({ username: session.u });
 });
 
+const WORKBENCH_FILE = path.join(ROOT, 'data', 'workbench.json');
+
+apiApp.get('/api/workbench', (req, res) => {
+  const session = currentUser(req);
+  if (!session) return res.status(401).json({ error: 'not authenticated' });
+
+  fs.readFile(WORKBENCH_FILE, 'utf8', (err, data) => {
+    if (err) {
+      console.error('Failed to read workbench database:', err);
+      return res.status(500).json({ error: 'failed to read workbench data' });
+    }
+    try {
+      const parsed = JSON.parse(data);
+      return res.json(parsed);
+    } catch (e) {
+      console.error('Malformed workbench JSON database:', e);
+      return res.status(500).json({ error: 'workbench data corrupted' });
+    }
+  });
+});
+
+apiApp.post('/api/workbench', (req, res) => {
+  const session = currentUser(req);
+  if (!session) return res.status(401).json({ error: 'not authenticated' });
+
+  const { entities, relationships } = req.body || {};
+  if (!entities || !relationships) {
+    return res.status(400).json({ error: 'invalid payload, entities and relationships are required' });
+  }
+
+  const payload = JSON.stringify({ entities, relationships }, null, 2);
+  fs.writeFile(WORKBENCH_FILE, payload, 'utf8', (err) => {
+    if (err) {
+      console.error('Failed to write workbench database:', err);
+      return res.status(500).json({ error: 'failed to save workbench data' });
+    }
+    return res.json({ success: true });
+  });
+});
+
 apiApp.listen(API_PORT, () => {
   console.log(`API Server listening on http://localhost:${API_PORT}`);
 }).on('error', (err) => {
