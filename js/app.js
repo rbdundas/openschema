@@ -170,7 +170,7 @@ function AuthApp() {
         </button>
         <p className="auth-eyebrow">Open Schema Foundation</p>
         <h1>
-          Covalent<span className="auth-mark">Flow</span>
+          OpenSchema<span className="auth-mark">Flow</span>
         </h1>
         <p className="auth-sub" style={{ margin: '0 0 1.5rem 0' }}>Sign in to access the schema portal.</p>
 

@@ -1,4 +1,4 @@
-# Agnostic Core Architecture: "Covalent Flow"
+# Agnostic Core Architecture: "OpenSchema Flow"
 
 This document outlines the design and scaffolding for a domain-agnostic business process modeling (BPMN) engine and schema builder. By abstracting concepts like "Policy", "Carrier", and "FNOL Claim" into generic elements like `Entity`, `Process`, and `Step`, we can build, test, and host the platform under employment agreements without violating the non-compete or IP assignment clauses.
 
