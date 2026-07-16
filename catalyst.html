@@ -41,10 +41,16 @@
         <a href="/#services" class="nav-link" id="nav-services-link">Consulting</a>
         <a href="/#vision" class="nav-link" id="nav-vision-link">Our Vision</a>
         <a href="/#careers" class="nav-link" id="nav-careers-link">Careers</a>
-        <a href="#login" class="nav-link" id="nav-login-link">Log in</a>
       </nav>
-      <!-- React auth container (avatar/login button) -->
-      <div id="auth-root"></div>
+      <!-- Header Controls: Auth widget + Mobile Hamburger -->
+      <div class="header-controls">
+        <div id="auth-root"></div>
+        <button class="hamburger-btn" aria-label="Toggle menu" onclick="document.querySelector('.site-nav').classList.toggle('is-open')">
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+        </button>
+      </div>
     </div>
   </header>
 

@@ -1,36 +1,60 @@
 {
   "entities": {
     "account": {
-      "title": "Account",
+      "title": "Account Entity",
       "icon": "🗂️",
       "category": "Core",
-      "desc": "Core account record mapping key fields like Name, Status, and Account Type (Personal vs Commercial).",
+      "desc": "Unified account record representing core demographics and risk parameters for both personal and commercial lines of business.",
       "flowTitle": "Account Qualification & Routing",
       "flowDesc": "Screens incoming accounts, evaluates classification, routes to appropriate personal or commercial validation logic.",
       "schema": [
         {
           "name": "id",
           "type": "string",
-          "desc": "Unique account identifier.",
+          "desc": "Unique account database identifier.",
           "constraints": "UUID, Primary Key"
         },
         {
           "name": "name",
           "type": "string",
-          "desc": "Legal name of account holder/organization.",
-          "constraints": "Required"
+          "desc": "Full legal name of person or business entity.",
+          "constraints": "Required, max 100 chars"
         },
         {
           "name": "type",
           "type": "string",
-          "desc": "Categorization of account structure.",
+          "desc": "Categorization of account profile.",
           "constraints": "Required, ENUM (personal, commercial)"
         },
         {
           "name": "status",
           "type": "string",
-          "desc": "Operational state of the account.",
-          "constraints": "ENUM (pending, active, suspended)"
+          "desc": "Current operational status.",
+          "constraints": "Required, ENUM (pending, active, suspended)"
+        },
+        {
+          "name": "fein",
+          "type": "string",
+          "desc": "Federal Employer ID (Commercial lines only).",
+          "constraints": "Conditional: Required if type == 'commercial'"
+        },
+        {
+          "name": "naics",
+          "type": "string",
+          "desc": "North American Industry Classification (Commercial only).",
+          "constraints": "Optional, 6-digit code"
+        },
+        {
+          "name": "ssn",
+          "type": "string",
+          "desc": "Social Security Number (Personal lines only).",
+          "constraints": "Conditional: Required if type == 'personal'"
+        },
+        {
+          "name": "dob",
+          "type": "date",
+          "desc": "Date of Birth (Personal lines only).",
+          "constraints": "Conditional: Required if type == 'personal'"
         },
         {
           "name": "created_at",
@@ -197,289 +221,6 @@
           {
             "node": "end",
             "log": "Account Intake and verification workflow completed successfully.",
-            "type": "success"
-          }
-        ]
-      }
-    },
-    "account_parameter": {
-      "title": "Account Parameters",
-      "icon": "⚙️",
-      "category": "Core",
-      "desc": "Registry definition schema mapping data parameters, labels, data types, and custom format regex checks.",
-      "flowTitle": "Parameter Schema Change Governance",
-      "flowDesc": "Manages modifications to parameter definitions, validating type consistency and auditing historical schemas.",
-      "schema": [
-        {
-          "name": "id",
-          "type": "string",
-          "desc": "Unique parameter reference code (e.g. param_fein).",
-          "constraints": "Primary Key"
-        },
-        {
-          "name": "field_name",
-          "type": "string",
-          "desc": "Machine-readable field attribute name.",
-          "constraints": "Required, lowercase alphanumeric"
-        },
-        {
-          "name": "display_label",
-          "type": "string",
-          "desc": "User-friendly form/UI field label.",
-          "constraints": "Required"
-        },
-        {
-          "name": "data_type",
-          "type": "string",
-          "desc": "Data classification of the parameter.",
-          "constraints": "Required, ENUM (string, number, boolean, date)"
-        },
-        {
-          "name": "validation_regex",
-          "type": "string",
-          "desc": "Regular expression validation pattern constraint.",
-          "constraints": "Optional"
-        }
-      ],
-      "bpmn": {
-        "nodes": [
-          {
-            "id": "start",
-            "type": "start",
-            "label": "New Parameter Proposal",
-            "position": {
-              "x": 50,
-              "y": 120
-            }
-          },
-          {
-            "id": "validate_regex",
-            "type": "webhook",
-            "label": "Verify Regex Syntax",
-            "position": {
-              "x": 180,
-              "y": 90
-            },
-            "url": "https://api.validator.internal/regex",
-            "inputs": "validation_regex",
-            "outputs": "is_valid",
-            "details": "Runs background checks verifying target regex pattern is compile-safe."
-          },
-          {
-            "id": "approve_schema",
-            "type": "user_input",
-            "label": "Approve Parameter",
-            "position": {
-              "x": 370,
-              "y": 90
-            },
-            "assignee": "Schema Architect",
-            "inputs": "field_name, data_type",
-            "outputs": "approved (boolean)",
-            "details": "Manual approval gating schema consistency checks before publishing."
-          },
-          {
-            "id": "end",
-            "type": "end",
-            "label": "Parameter Active",
-            "position": {
-              "x": 560,
-              "y": 120
-            }
-          }
-        ],
-        "edges": [
-          {
-            "id": "e-start-regex",
-            "source": "start",
-            "target": "validate_regex"
-          },
-          {
-            "id": "e-regex-appr",
-            "source": "validate_regex",
-            "target": "approve_schema"
-          },
-          {
-            "id": "e-appr-end",
-            "source": "approve_schema",
-            "target": "end"
-          }
-        ],
-        "steps": [
-          {
-            "node": "start",
-            "log": "Proposed parameter registration: 'fein' (string). Check started...",
-            "type": "system"
-          },
-          {
-            "node": "validate_regex",
-            "log": "Webhook triggered: validating compile checks for regex expression '^\\d{2}-\\d{7}$'...",
-            "type": "info"
-          },
-          {
-            "node": "validate_regex",
-            "log": "Regex syntax validation passed.",
-            "type": "success"
-          },
-          {
-            "node": "approve_schema",
-            "log": "Architect review task: checking namespace collisions...",
-            "type": "info"
-          },
-          {
-            "node": "approve_schema",
-            "log": "Parameter proposal approved by Architect role.",
-            "type": "success"
-          },
-          {
-            "node": "end",
-            "log": "Parameter registered in registry successfully.",
-            "type": "success"
-          }
-        ]
-      }
-    },
-    "account_mapping": {
-      "title": "Account Mapping",
-      "icon": "🔗",
-      "category": "Core",
-      "desc": "Junction table mapping account instances to specific parameters and storing their dynamic values.",
-      "flowTitle": "Value Write Validation Flow",
-      "flowDesc": "Triggers dynamic parameter checks on updates, validating formats and updating downstream caches.",
-      "schema": [
-        {
-          "name": "account_id",
-          "type": "string",
-          "desc": "Reference identifier of the owner account.",
-          "constraints": "Required, Foreign Key -> account.id"
-        },
-        {
-          "name": "parameter_id",
-          "type": "string",
-          "desc": "Reference identifier of the target parameter definition.",
-          "constraints": "Required, Foreign Key -> account_parameter.id"
-        },
-        {
-          "name": "value",
-          "type": "string",
-          "desc": "Serialized parameter value string payload.",
-          "constraints": "Required"
-        }
-      ],
-      "bpmn": {
-        "nodes": [
-          {
-            "id": "start",
-            "type": "start",
-            "label": "Value Update Request",
-            "position": {
-              "x": 50,
-              "y": 120
-            }
-          },
-          {
-            "id": "fetch_def",
-            "type": "webhook",
-            "label": "Fetch Parameter Rule",
-            "position": {
-              "x": 180,
-              "y": 90
-            },
-            "url": "https://api.openschema.org/v1/parameters/get",
-            "inputs": "parameter_id",
-            "outputs": "validation_regex, data_type",
-            "details": "Retrieves the target metadata schema pattern to apply validation checks."
-          },
-          {
-            "id": "check_regex",
-            "type": "gateway",
-            "label": "Matches Format?",
-            "position": {
-              "x": 370,
-              "y": 100
-            },
-            "condition": "value.matches(validation_regex)",
-            "details": "Validation engine testing target input value against the regex pattern."
-          },
-          {
-            "id": "sync_cache",
-            "type": "webhook",
-            "label": "Update Cache View",
-            "position": {
-              "x": 500,
-              "y": 90
-            },
-            "url": "https://api.openschema.org/v1/cache/rebuild",
-            "inputs": "account_id",
-            "outputs": "status",
-            "details": "Invalidates cached views and triggers rebuild of flat JSON models."
-          },
-          {
-            "id": "end",
-            "type": "end",
-            "label": "Value Persisted",
-            "position": {
-              "x": 690,
-              "y": 120
-            }
-          }
-        ],
-        "edges": [
-          {
-            "id": "e-start-fetch",
-            "source": "start",
-            "target": "fetch_def"
-          },
-          {
-            "id": "e-fetch-gate",
-            "source": "fetch_def",
-            "target": "check_regex"
-          },
-          {
-            "id": "e-gate-sync",
-            "source": "check_regex",
-            "target": "sync_cache"
-          },
-          {
-            "id": "e-sync-end",
-            "source": "sync_cache",
-            "target": "end"
-          }
-        ],
-        "steps": [
-          {
-            "node": "start",
-            "log": "Incoming parameter value write request: mapping 'fein' on account 'acc_1001'...",
-            "type": "system"
-          },
-          {
-            "node": "fetch_def",
-            "log": "Webhook triggered: loading metadata schema definition rules...",
-            "type": "info"
-          },
-          {
-            "node": "fetch_def",
-            "log": "Rule loaded successfully. Target regex: '^\\d{2}-\\d{7}$'.",
-            "type": "success"
-          },
-          {
-            "node": "check_regex",
-            "log": "Evaluating format: testing value '12-3456789' against target regex pattern. Matched.",
-            "type": "system"
-          },
-          {
-            "node": "sync_cache",
-            "log": "Webhook triggered: invalidating flattened account caches...",
-            "type": "info"
-          },
-          {
-            "node": "sync_cache",
-            "log": "Account cache views updated successfully.",
-            "type": "success"
-          },
-          {
-            "node": "end",
-            "log": "Dynamic parameter mapping persisted to store.",
             "type": "success"
           }
         ]
@@ -738,10 +479,10 @@
           "constraints": "UUID, Primary Key"
         },
         {
-          "name": "client_id",
+          "name": "account_id",
           "type": "string",
-          "desc": "Reference ID of purchasing client entity.",
-          "constraints": "Required, Foreign Key -> clients.id"
+          "desc": "Reference ID of purchasing account entity.",
+          "constraints": "Required, Foreign Key -> account.id"
         },
         {
           "name": "order_date",
@@ -1206,22 +947,16 @@
   },
   "relationships": [
     {
+      "id": "rel-account-order",
+      "source": "account",
+      "target": "order",
+      "type": "one-to-many"
+    },
+    {
       "id": "rel-order-ledger",
       "source": "order",
       "target": "ledger",
       "type": "many-to-one"
-    },
-    {
-      "id": "rel-account-mapping",
-      "source": "account",
-      "target": "account_mapping",
-      "type": "one-to-many"
-    },
-    {
-      "id": "rel-param-mapping",
-      "source": "account_parameter",
-      "target": "account_mapping",
-      "type": "one-to-many"
     }
   ]
 }
