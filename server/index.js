@@ -1,7 +1,7 @@
 'use strict';
 
 /**
- * Covalent Technologies Servers:
+ * OpenSchema Foundation Servers:
  * 
  * 1. Web Server (runs on Port 3000)
  *    - Serves the public landing page (index.html), CSS, JS, assets.

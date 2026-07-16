@@ -43,10 +43,16 @@
         <a href="#architecture" class="nav-link" id="nav-arch-link">Architecture</a>
         <a href="#primitives" class="nav-link" id="nav-primitives-link">Primitives</a>
         <a href="/schema.html" class="nav-link" id="nav-schema-link">Schema Template</a>
-        <a href="/login.html" class="nav-link" id="nav-login-link">Log in</a>
       </nav>
-      <!-- React auth container (avatar/login button) -->
-      <div id="auth-root"></div>
+      <!-- Header Controls: Auth widget + Mobile Hamburger -->
+      <div class="header-controls">
+        <div id="auth-root"></div>
+        <button class="hamburger-btn" aria-label="Toggle menu" onclick="document.querySelector('.site-nav').classList.toggle('is-open')">
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+          <span class="hamburger-bar"></span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -75,7 +81,7 @@
       <div class="card-gradient-border">
         <div class="product-card">
           <div class="badge">Agnostic Core</div>
-          <h2>Covalent <span class="accent-span">Flow</span></h2>
+          <h2>OpenSchema <span class="accent-span">Flow</span></h2>
           <p class="lead-text">
             By abstracting business operations from industry-specific domains into generic data containers and process
             execution states, we build an infinitely adaptable engine.
