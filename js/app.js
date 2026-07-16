@@ -736,6 +736,68 @@ function SchemaWorkbench() {
 
   const activeEntityData = entities[activeEntityKey];
 
+  const handleExportSchema = () => {
+    try {
+      const exportData = {
+        entities,
+        relationships
+      };
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'openschema-workbench.json';
+      link.click();
+      URL.revokeObjectURL(url);
+      addLog("Exported workbench schemas to openschema-workbench.json successfully", "success");
+    } catch (err) {
+      console.error("Export Error:", err);
+      alert("Failed to export schema: " + err.message);
+    }
+  };
+
+  const handleImportSchema = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        if (!parsed || typeof parsed !== 'object') {
+          throw new Error("Invalid file content: not a JSON object");
+        }
+        if (!parsed.entities || typeof parsed.entities !== 'object') {
+          throw new Error("Missing 'entities' object in schema definition");
+        }
+        if (!parsed.relationships || !Array.isArray(parsed.relationships)) {
+          throw new Error("Missing or invalid 'relationships' array in schema definition");
+        }
+
+        // Apply imported state
+        setEntities(parsed.entities);
+        setRelationships(parsed.relationships);
+        
+        // Pick the first entity key as active
+        const keys = Object.keys(parsed.entities);
+        if (keys.length > 0) {
+          setActiveEntityKey(keys[0]);
+        }
+
+        // Save imported state to the server
+        saveWorkbench(parsed.entities, parsed.relationships);
+        
+        addLog("Imported workbench schemas successfully", "success");
+        alert("Schema imported successfully!");
+      } catch (err) {
+        console.error("Import Error:", err);
+        alert("Failed to import schema: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
+
   // Helper to add logs to console
   const addLog = useCallback((message, type = 'info') => {
     const time = new Date();
@@ -1323,6 +1385,31 @@ function SchemaWorkbench() {
           <div className="workspace-title-area">
             <h2>{activeEntityData.title}</h2>
             <p>{activeEntityData.desc}</p>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+              <button 
+                type="button" 
+                className="btn-sim" 
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: '4px' }}
+                onClick={handleExportSchema}
+              >
+                📥 Export Schema
+              </button>
+              <button 
+                type="button" 
+                className="btn-sim" 
+                style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', borderRadius: '4px' }}
+                onClick={() => document.getElementById('import-schema-file').click()}
+              >
+                📤 Import Schema
+              </button>
+              <input 
+                type="file" 
+                id="import-schema-file" 
+                style={{ display: 'none' }} 
+                accept=".json" 
+                onChange={handleImportSchema} 
+              />
+            </div>
           </div>
           <div className="workspace-tabs" role="tablist">
             <button
