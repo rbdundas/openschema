@@ -168,9 +168,8 @@ function AuthApp() {
         <button type="button" className="modal-close-btn" onClick={handleCloseModal} aria-label="Close modal">
           &times;
         </button>
-        <p className="auth-eyebrow">Open Schema Foundation</p>
-        <h1>
-          OpenSchema<span className="auth-mark">Flow</span>
+        <h1 style={{ marginTop: '0.8rem', marginBottom: '0.4rem', fontSize: '1.8rem' }}>
+          Open Schema Foundation
         </h1>
         <p className="auth-sub" style={{ margin: '0 0 1.5rem 0' }}>Sign in to access the schema portal.</p>
 
