@@ -707,6 +707,7 @@ function SchemaWorkbench() {
 
   // Inspector Panel State
   const [selectedElement, setSelectedElement] = useState(null);
+  const [previewMode, setPreviewMode] = useState('commercial');
 
   // React Flow state bindings for Tab 3 (BPMN Workflow)
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -897,71 +898,90 @@ function SchemaWorkbench() {
 
   // Sync ERD Diagram canvas (Schema Designer tab)
   const rebuildErdDiagram = useCallback(() => {
-    // Generate nodes for all active entities in state, laying them out in a clean grid layout
-    const keys = Object.keys(entities);
-    const layoutPositions = [
-      { x: 50, y: 50 },
-      { x: 380, y: 50 },
-      { x: 50, y: 400 },
-      { x: 380, y: 400 },
-      { x: 710, y: 220 },
-      { x: 710, y: 50 },
-      { x: 710, y: 400 }
+    // We render the custom conceptual workflow mapping requested by the user:
+    // Account Parameters and Account Mapping connect to a gateway node, which builds the Account Entity.
+    const pNode = entities['account_parameter'];
+    const mNode = entities['account_mapping'];
+    const aNode = entities['account'];
+
+    if (!pNode || !mNode || !aNode) return;
+
+    const flowNodes = [
+      {
+        id: 'account_parameter',
+        type: 'erd',
+        position: { x: 80, y: 40 },
+        data: {
+          title: "Account Parameters",
+          category: "Core",
+          icon: "⚙️",
+          fields: pNode.schema,
+          isSelected: selectedElement && selectedElement.category === 'erd' && selectedElement.key === 'account_parameter'
+        }
+      },
+      {
+        id: 'account_mapping',
+        type: 'erd',
+        position: { x: 80, y: 350 },
+        data: {
+          title: "Account Mapping",
+          category: "Core",
+          icon: "🔗",
+          fields: mNode.schema,
+          isSelected: selectedElement && selectedElement.category === 'erd' && selectedElement.key === 'account_mapping'
+        }
+      },
+      {
+        id: 'combine_map',
+        type: 'gateway',
+        position: { x: 440, y: 260 },
+        data: {
+          label: "➕ Combine / Map",
+          isActive: false,
+          isSelected: false
+        }
+      },
+      {
+        id: 'account',
+        type: 'erd',
+        position: { x: 680, y: 185 },
+        data: {
+          title: "Account",
+          category: "Core",
+          icon: "🗂️",
+          fields: aNode.schema,
+          isSelected: selectedElement && selectedElement.category === 'erd' && selectedElement.key === 'account'
+        }
+      }
     ];
 
-    const flowNodes = keys.map((key, index) => {
-      const ent = entities[key];
-      const isSelected = selectedElement && selectedElement.category === 'erd' && selectedElement.key === key;
-      const position = layoutPositions[index] || { x: 50 + (index * 150), y: 200 };
-      
-      return {
-        id: key,
-        type: 'erd',
-        position: position,
-        data: {
-          title: ent.title,
-          category: ent.category,
-          icon: ent.icon,
-          fields: ent.schema,
-          isSelected: !!isSelected
-        }
-      };
-    });
-
-    // Generate edges for all defined relationships
-    const flowEdges = relationships.map(r => {
-      const isSelected = selectedElement && selectedElement.category === 'relationship' && selectedElement.id === r.id;
-      
-      let labelText = "1 : 1";
-      if (r.type === 'one-to-many') labelText = "1 : N";
-      else if (r.type === 'many-to-one') labelText = "N : 1";
-      else if (r.type === 'many-to-many') labelText = "N : M";
-
-      return {
-        id: r.id,
-        source: r.source,
-        target: r.target,
-        style: {
-          stroke: isSelected ? '#06b6d4' : 'rgba(255, 255, 255, 0.25)',
-          strokeWidth: isSelected ? 3.5 : 2,
-        },
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: isSelected ? '#06b6d4' : 'rgba(255, 255, 255, 0.3)',
-          width: 12,
-          height: 12
-        },
-        label: labelText,
-        labelStyle: { fill: '#ffffff', fontWeight: 600, fontSize: 10 },
-        labelBgPadding: [4, 4],
-        labelBgBorderRadius: 4,
-        labelBgStyle: { fill: '#1e293b', fillOpacity: 0.85, stroke: 'rgba(255,255,255,0.08)' }
-      };
-    });
+    const flowEdges = [
+      {
+        id: 'edge-p-to-combine',
+        source: 'account_parameter',
+        target: 'combine_map',
+        style: { stroke: '#06b6d4', strokeWidth: 3 },
+        animated: true
+      },
+      {
+        id: 'edge-m-to-combine',
+        source: 'account_mapping',
+        target: 'combine_map',
+        style: { stroke: '#06b6d4', strokeWidth: 3 },
+        animated: true
+      },
+      {
+        id: 'edge-combine-to-a',
+        source: 'combine_map',
+        target: 'account',
+        style: { stroke: '#10b981', strokeWidth: 3.5 },
+        animated: true
+      }
+    ];
 
     setErdNodes(flowNodes);
     setErdEdges(flowEdges);
-  }, [entities, relationships, selectedElement]);
+  }, [entities, selectedElement]);
 
   useEffect(() => {
     if (activeTab === 'bpmn') {
@@ -1620,6 +1640,215 @@ function SchemaWorkbench() {
                   </pre>
                 </div>
               )}
+
+              {/* Dynamic Instantiation Preview Playground */}
+              <div className="simulation-panel" style={{ marginTop: '1rem', background: 'rgba(15, 23, 42, 0.55)', border: '1px solid rgba(6, 182, 212, 0.15)', borderRadius: '8px', padding: '1.2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.6rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <h3 style={{ margin: 0, fontSize: '1rem', color: '#06b6d4', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      📊 Dynamic Profile Compiler Playground
+                    </h3>
+                    <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: '#94a3b8' }}>
+                      See how the database mapping tables compile into concrete Personal or Commercial API payloads.
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.4rem', marginLeft: 'auto' }}>
+                    <button 
+                      type="button"
+                      className={`btn-sim ${previewMode === 'commercial' ? 'primary' : ''}`}
+                      style={{ padding: '0.3rem 0.75rem', fontSize: '0.75rem' }}
+                      onClick={() => setPreviewMode('commercial')}
+                    >
+                      🏢 Commercial Profile
+                    </button>
+                    <button 
+                      type="button"
+                      className={`btn-sim ${previewMode === 'personal' ? 'primary' : ''}`}
+                      style={{ padding: '0.3rem 0.75rem', fontSize: '0.75rem' }}
+                      onClick={() => setPreviewMode('personal')}
+                    >
+                      👤 Personal Profile
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem' }}>
+                  {/* Left Column: Relational Database Rows */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600 }}>1. Relational Database Instance Tables</h4>
+                    
+                    {/* Account Table */}
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Table: Account</div>
+                      <table style={{ width: '100%', fontSize: '0.7rem', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>id</th>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>name</th>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>type</th>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td style={{ padding: '4px', fontFamily: 'monospace', color: '#38bdf8' }}>{previewMode === 'commercial' ? 'acc_comm_01' : 'acc_pers_01'}</td>
+                            <td style={{ padding: '4px' }}>{previewMode === 'commercial' ? 'Acme Corp LLC' : 'John Doe'}</td>
+                            <td style={{ padding: '4px', color: '#a78bfa' }}>{previewMode === 'commercial' ? 'commercial' : 'personal'}</td>
+                            <td style={{ padding: '4px', color: '#4ade80' }}>active</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* ParameterDefinitions Table */}
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Table: AccountParameter</div>
+                      <table style={{ width: '100%', fontSize: '0.7rem', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>id</th>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>field_name</th>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>data_type</th>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>validation_regex</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {previewMode === 'commercial' ? (
+                            <>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_fein</td>
+                                <td style={{ padding: '4px' }}>fein</td>
+                                <td style={{ padding: '4px', color: '#e2e8f0' }}>string</td>
+                                <td style={{ padding: '4px', color: '#94a3b8' }}>^\d&#123;2&#125;-\d&#123;7&#125;$</td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_naics</td>
+                                <td style={{ padding: '4px' }}>naics</td>
+                                <td style={{ padding: '4px', color: '#e2e8f0' }}>string</td>
+                                <td style={{ padding: '4px', color: '#94a3b8' }}>^\d&#123;6&#125;$</td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_revenue</td>
+                                <td style={{ padding: '4px' }}>revenue</td>
+                                <td style={{ padding: '4px', color: '#e2e8f0' }}>number</td>
+                                <td style={{ padding: '4px', color: '#94a3b8' }}>null</td>
+                              </tr>
+                            </>
+                          ) : (
+                            <>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_ssn</td>
+                                <td style={{ padding: '4px' }}>ssn</td>
+                                <td style={{ padding: '4px', color: '#e2e8f0' }}>string</td>
+                                <td style={{ padding: '4px', color: '#94a3b8' }}>^\d&#123;3&#125;-\d&#123;2&#125;-\d&#123;4&#125;$</td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_dob</td>
+                                <td style={{ padding: '4px' }}>dob</td>
+                                <td style={{ padding: '4px', color: '#e2e8f0' }}>date</td>
+                                <td style={{ padding: '4px', color: '#94a3b8' }}>null</td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_occupation</td>
+                                <td style={{ padding: '4px' }}>occupation</td>
+                                <td style={{ padding: '4px', color: '#e2e8f0' }}>string</td>
+                                <td style={{ padding: '4px', color: '#94a3b8' }}>null</td>
+                              </tr>
+                            </>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* AccountParameterValue Table */}
+                    <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.6rem', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                      <div style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '0.4rem' }}>Table: AccountMapping</div>
+                      <table style={{ width: '100%', fontSize: '0.7rem', borderCollapse: 'collapse' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(255,255,255,0.03)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>account_id</th>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>parameter_id</th>
+                            <th style={{ padding: '4px', textAlign: 'left' }}>value</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {previewMode === 'commercial' ? (
+                            <>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace', color: '#38bdf8' }}>acc_comm_01</td>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_fein</td>
+                                <td style={{ padding: '4px', color: '#fbbf24', fontWeight: 600 }}>"12-3456789"</td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace', color: '#38bdf8' }}>acc_comm_01</td>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_naics</td>
+                                <td style={{ padding: '4px', color: '#fbbf24', fontWeight: 600 }}>"524210"</td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace', color: '#38bdf8' }}>acc_comm_01</td>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_revenue</td>
+                                <td style={{ padding: '4px', color: '#fbbf24', fontWeight: 600 }}>"1500000"</td>
+                              </tr>
+                            </>
+                          ) : (
+                            <>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace', color: '#38bdf8' }}>acc_pers_01</td>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_ssn</td>
+                                <td style={{ padding: '4px', color: '#fbbf24', fontWeight: 600 }}>"999-99-9999"</td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace', color: '#38bdf8' }}>acc_pers_01</td>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_dob</td>
+                                <td style={{ padding: '4px', color: '#fbbf24', fontWeight: 600 }}>"1985-06-15"</td>
+                              </tr>
+                              <tr>
+                                <td style={{ padding: '4px', fontFamily: 'monospace', color: '#38bdf8' }}>acc_pers_01</td>
+                                <td style={{ padding: '4px', fontFamily: 'monospace' }}>param_occupation</td>
+                                <td style={{ padding: '4px', color: '#fbbf24', fontWeight: 600 }}>"Software Engineer"</td>
+                              </tr>
+                            </>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  {/* Right Column: Compiled JSON API Payload */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 600 }}>2. Compiled JSON Profile (API Delivery Payload)</h4>
+                    <pre style={{ flex: 1, margin: 0, padding: '0.8rem', background: '#0f172a', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', fontSize: '0.72rem', fontFamily: 'monospace', overflowX: 'auto', color: '#a8a29e', display: 'flex', flexDirection: 'column' }}>
+                      <code style={{ flex: 1 }}>
+                        {previewMode === 'commercial' ? 
+                          JSON.stringify({
+                            id: "acc_comm_01",
+                            name: "Acme Corp LLC",
+                            type: "commercial",
+                            status: "active",
+                            properties: {
+                              fein: "12-3456789",
+                              naics: "524210",
+                              revenue: 1500000
+                            }
+                          }, null, 2)
+                          :
+                          JSON.stringify({
+                            id: "acc_pers_01",
+                            name: "John Doe",
+                            type: "personal",
+                            status: "active",
+                            properties: {
+                              ssn: "999-99-9999",
+                              dob: "1985-06-15",
+                              occupation: "Software Engineer"
+                            }
+                          }, null, 2)
+                        }
+                      </code>
+                    </pre>
+                  </div>
+                </div>
+              </div>
             </section>
           )}
 
