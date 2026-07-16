@@ -4,6 +4,7 @@ dist
 .idea
 .vscode
 .claude
-data
+data/users.json
+data/users.json.tmp
 *.log
 gcp-key.json

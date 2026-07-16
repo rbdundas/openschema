@@ -14,6 +14,7 @@
 const fs = require('fs');
 const fsp = require('fs/promises');
 const path = require('path');
+const bcrypt = require('bcryptjs');
 
 const DATA_DIR = path.resolve(__dirname, '..', 'data');
 const DATA_FILE = path.join(DATA_DIR, 'users.json');
@@ -25,7 +26,19 @@ function init() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
   if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify({ users: [] }, null, 2));
+    const defaultAdminHash = bcrypt.hashSync('AdminPassword123!', 12);
+    const initialData = {
+      users: [
+        {
+          id: 1,
+          username: 'admin@openschema.foundation',
+          passwordHash: defaultAdminHash,
+          createdAt: new Date().toISOString()
+        }
+      ]
+    };
+    fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2));
+    console.log('Seeded default admin user in users.json');
   }
 }
 

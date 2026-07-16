@@ -6,5 +6,7 @@ dist
 .cache
 
 # Local file-based user database (contains password hashes — do not commit)
-data
+data/users.json
+data/users.json.tmp
 gcp-key.json
+

@@ -23,6 +23,9 @@ COPY --from=builder /app/dist ./dist
 # Copy server assets
 COPY --from=builder /app/server ./server
 
+# Copy database templates (contains workbench.json)
+COPY --from=builder /app/data ./data
+
 EXPOSE 8080
 
 CMD ["node", "server/index.js"]
